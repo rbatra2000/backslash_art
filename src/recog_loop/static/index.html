@@ -5,60 +5,55 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Before Recognition</title>
 <style>
-:root{--bg:#f6f5f2;--card:#fff;--ink:#1d1c1a;--mute:#6f6b64;--line:#e2dfd8;--accent:#b5541c;--ok:#2f7d4f;--bad:#b3362b;--sel:#b5541c22}
-@media (prefers-color-scheme:dark){:root{--bg:#141413;--card:#1e1d1b;--ink:#ecebe7;--mute:#9a968d;--line:#33312d;--accent:#e08a52;--ok:#6fbf8e;--bad:#e27a6f;--sel:#e08a5222}}
+:root{--bg:#f6f5f2;--card:#fff;--ink:#1d1c1a;--mute:#6f6b64;--line:#e2dfd8;--accent:#b5541c;--ok:#2f7d4f;--bad:#b3362b}
+@media (prefers-color-scheme:dark){:root{--bg:#141413;--card:#1e1d1b;--ink:#ecebe7;--mute:#9a968d;--line:#33312d;--accent:#e08a52;--ok:#6fbf8e;--bad:#e27a6f}}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,sans-serif}
-header{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-h1{font-size:15px;margin:0 8px 0 0;font-weight:650}
-select,input,button{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:6px;padding:5px 8px}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.4 system-ui,-apple-system,sans-serif}
+header{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+h1{font-size:15px;margin:0 8px 0 0}
+select,input,button{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:6px;padding:4px 8px}
 button{cursor:pointer;background:var(--accent);color:#fff;border-color:var(--accent)}
-input[type=number]{width:60px}
+input[type=number]{width:56px}
 #status{margin-left:auto;color:var(--mute)}
 #status.live::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);margin-right:6px;animation:p 1s infinite}
 @keyframes p{50%{opacity:.25}}
-main{max-width:1100px;margin:0 auto;padding:16px}
-#strip{display:flex;gap:8px;overflow-x:auto;padding-bottom:10px;margin-bottom:14px}
-#strip figure{margin:0;flex:0 0 auto;width:110px;text-align:center;font-size:11px;color:var(--mute)}
-#strip img{width:110px;height:146px;object-fit:cover;border-radius:6px;border:1px solid var(--line);display:block}
-.step{background:var(--card);border:1px solid var(--line);border-radius:10px;margin-bottom:16px;overflow:hidden}
-.step>h2{margin:0;padding:10px 14px;font-size:14px;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:baseline}
-.step>h2 small{color:var(--mute);font-weight:400}
-.body{padding:14px;display:grid;grid-template-columns:200px 1fr;gap:16px}
-@media(max-width:700px){.body{grid-template-columns:1fr}}
-.body img{width:100%;border-radius:6px;display:block}
-.sec{margin-bottom:12px}
-.sec h3{margin:0 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--mute)}
-.bar{display:flex;align-items:center;gap:8px;margin:3px 0}
-.bar .t{height:8px;background:var(--accent);border-radius:4px;min-width:2px}
-.bar .l{font-size:13px}
-.ev{color:var(--mute);font-size:12px;margin:0 0 4px 0}
-.chip{display:inline-block;border:1px solid var(--line);border-radius:99px;padding:1px 8px;margin:2px 4px 2px 0;font-size:12px}
-.chip.keep{border-color:var(--ok);color:var(--ok)}.chip.alt{border-color:var(--bad);color:var(--bad)}
-details summary{cursor:pointer;color:var(--mute);font-size:12px}
-pre{white-space:pre-wrap;margin:6px 0 0;font:12px/1.4 ui-monospace,monospace;color:var(--mute)}
-.cands{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:0 14px 14px}
-@media(max-width:700px){.cands{grid-template-columns:1fr}}
-.cand{border:2px solid var(--line);border-radius:8px;padding:6px;min-height:80px}
-.cand.sel{border-color:var(--accent);background:var(--sel)}
-.cand.rej{opacity:.8}
-.cand img{width:100%;border-radius:5px;display:block}
-.sc{font-size:12px;margin-top:6px}
-.sc b{font-weight:600}
-.sc .r{color:var(--mute);margin:1px 0 5px}
-.fail{color:var(--bad);font-size:12px}
-.why{padding:0 14px 14px;color:var(--mute)}
-.why b{color:var(--accent)}
-.status{padding:8px 14px;color:var(--mute);font-style:italic;border-top:1px solid var(--line)}
-.err{color:var(--bad);padding:8px 14px}
+main{max-width:980px;margin:0 auto;padding:16px}
+/* chain strip: one thumbnail per stage */
+#strip{display:flex;align-items:center;gap:6px;overflow-x:auto;padding-bottom:12px;margin-bottom:12px}
+#strip figure{margin:0;flex:0 0 auto;text-align:center;font-size:11px;color:var(--mute)}
+#strip img{width:84px;height:112px;object-fit:cover;border-radius:6px;border:1px solid var(--line);display:block}
+#strip .arr{color:var(--mute)}
+/* step card */
+.step{background:var(--card);border:1px solid var(--line);border-radius:10px;margin-bottom:14px;padding:12px 14px}
+.step h2{margin:0 0 10px;font-size:14px;display:flex;gap:8px;align-items:baseline}
+.step h2 .st{margin-left:auto;font-weight:400;color:var(--mute);font-size:12px;font-style:italic}
+.top{display:grid;grid-template-columns:150px 20px 150px 1fr;gap:10px;align-items:center}
+@media(max-width:700px){.top{grid-template-columns:1fr 1fr}.top .arrow{display:none}.top .reads{grid-column:1/-1}}
+.top img,.ph{width:100%;border-radius:6px;display:block;aspect-ratio:3/4;object-fit:cover;background:var(--line)}
+.arrow{color:var(--mute);text-align:center}
+.cap{font-size:11px;color:var(--mute);margin-top:2px;text-align:center}
+.reads div{margin:2px 0}
+.reads .bar{display:inline-block;height:6px;background:var(--accent);border-radius:3px;margin-right:6px;vertical-align:middle}
+.cands{display:flex;gap:10px;margin-top:12px}
+.cand{width:100px;border:2px solid transparent;border-radius:8px;padding:3px;font-size:11px;color:var(--mute);text-align:center}
+.cand img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:5px;display:block}
+.cand.sel{border-color:var(--accent)}
+.cand .ok{color:var(--ok)}.cand .no{color:var(--bad)}
+details{margin-top:10px}
+summary{cursor:pointer;color:var(--mute);font-size:12px}
+.why{font-size:12px;color:var(--mute);margin-top:6px}
+.why p{margin:4px 0}.why b{color:var(--ink)}
+.chip{display:inline-block;border:1px solid var(--line);border-radius:99px;padding:0 7px;margin:1px 3px 1px 0}
+.keep{border-color:var(--ok);color:var(--ok)}.alt{border-color:var(--bad);color:var(--bad)}
+pre{white-space:pre-wrap;margin:4px 0;font:11px/1.4 ui-monospace,monospace}
+.err{color:var(--bad);font-size:12px}
 .empty{color:var(--mute);text-align:center;padding:60px 0}
 </style>
 </head>
 <body>
 <header>
   <h1>Before Recognition</h1>
-  <select id="runs" title="past runs"></select>
-  <span style="color:var(--mute)">or new run:</span>
+  <select id="runs"></select>
   <select id="asset"></select>
   <input id="steps" type="number" min="1" max="20" value="3" title="steps">
   <button id="start">Start</button>
@@ -71,80 +66,72 @@ pre{white-space:pre-wrap;margin:6px 0 0;font:12px/1.4 ui-monospace,monospace;col
 <script>
 const $=s=>document.querySelector(s);
 const el=(tag,attrs={},...kids)=>{const e=document.createElement(tag);for(const[k,v]of Object.entries(attrs)){if(k==='class')e.className=v;else if(k==='text')e.textContent=v;else e.setAttribute(k,v)}for(const c of kids.flat())if(c!=null)e.append(c);return e};
-const pct=x=>Math.round(x*100)+'%';
+const pct=x=>Math.round(x*100)+'%', f2=x=>x.toFixed(2);
 let es=null,runId=null,steps={};
+const file=f=>`/runs/${runId}/${f}`;
 
-function bars(readings,showEvidence){
-  const w=el('div');
-  for(const r of readings){
-    w.append(el('div',{class:'bar'},el('div',{class:'t',style:`width:${Math.max(2,r.probability*160)}px`}),
-      el('span',{class:'l',text:`${pct(r.probability)}  ${r.label}`})));
-    if(showEvidence&&r.evidence)w.append(el('div',{class:'ev',text:r.evidence}));
-  }
-  return w;
+function stripAdd(src,label){
+  const s=$('#strip');
+  if(s.children.length)s.append(el('span',{class:'arr',text:'→'}));
+  s.append(el('figure',{},el('img',{src}),el('div',{text:label})));
 }
-function ensureStep(t){
+function ensure(t){
   if(steps[t])return steps[t];
   const s={};
-  s.root=el('div',{class:'step'});
-  s.title=el('h2',{},`Step ${t}`,s.sub=el('small',{}));
-  s.img=el('img');
-  s.info=el('div');
-  s.body=el('div',{class:'body'},el('div',{},s.img,el('div',{class:'ev',text:'input (earlier steps go backwards in time)'})),s.info);
+  s.title=el('span',{text:`Step ${t}`});
+  s.st=el('span',{class:'st'});
+  s.inImg=el('img');
+  s.outBox=el('div',{},el('div',{class:'ph'}),el('div',{class:'cap',text:'result'}));
+  s.reads=el('div',{class:'reads'});
   s.cands=el('div',{class:'cands'});
-  s.why=el('div',{class:'why'});
-  s.status=el('div',{class:'status'});
-  s.root.append(s.title,s.body,s.cands,s.why,s.status);
-  $('#timeline').append(s.root);
   s.slots={};
+  s.why=el('div',{class:'why'});
+  s.root=el('div',{class:'step'},
+    el('h2',{},s.title,s.st),
+    el('div',{class:'top'},el('div',{},s.inImg,el('div',{class:'cap',text:'before'})),el('div',{class:'arrow',text:'→'}),s.outBox,s.reads),
+    s.cands,
+    el('details',{},el('summary',{text:'Why'}),s.why));
+  $('#timeline').append(s.root);
   return steps[t]=s;
 }
 function slot(s,i){
   if(s.slots[i])return s.slots[i];
-  const c={root:el('div',{class:'cand'}),img:el('img'),sc:el('div',{class:'sc'})};
-  c.root.append(el('div',{class:'ev',text:`candidate ${i+1}`}),c.img,c.sc);
+  const c={img:el('img'),meta:el('div',{text:'…'})};
+  c.root=el('div',{class:'cand'},c.img,c.meta);
   s.slots[i]=c;
-  const order=Object.keys(s.slots).map(Number).sort();
-  s.cands.replaceChildren(...order.map(k=>s.slots[k].root));
+  s.cands.replaceChildren(...Object.keys(s.slots).map(Number).sort().map(k=>s.slots[k].root));
   return c;
 }
-const file=f=>`/runs/${runId}/${f}`;
+function why(s,html){s.why.append(html)}
+
 function handle(e){
-  const t=e.step;
+  const t=e.step, s=t?ensure(t):null;
   switch(e.type){
     case'run_start':$('#status').textContent=`running · ${e.steps} steps`;$('#status').className='live';break;
-    case'step_start':{const s=ensureStep(t);s.img.src=file(e.input);
-      const f=el('figure',{id:'f'+t});$('#strip').append(f);
-      f.append(el('img',{src:file(e.input)}),el('div',{text:t===1?'original':`after step ${t-1}`}));break}
-    case'status':ensureStep(t).status.textContent=e.text;$('#status').textContent=`step ${t} · ${e.text}`;$('#status').className='live';break;
-    case'reading':{const s=ensureStep(t);s.sub.textContent=`scale: ${e.scale}`;
-      s.info.append(el('div',{class:'sec'},el('h3',{text:'Reading (top 3)'}),bars(e.readings,true)));break}
-    case'hypothesis':{const s=ensureStep(t);const o=e.operation;
-      s.title.firstChild.textContent=`Step ${t} · undo ${o.name}`;
-      s.info.append(el('div',{class:'sec'},el('h3',{text:'Formation hypothesis'}),
-        el('div',{text:e.formation.process}),el('div',{class:'ev',text:e.formation.reasoning}),
-        e.formation.evidence.map(x=>el('div',{class:'ev',text:'· '+x}))));
-      s.info.append(el('div',{class:'sec'},el('h3',{text:`Operation: ${o.name}`+(e.banned?` (${e.banned} excluded: repeated)`:'')}),
-        el('div',{class:'ev',text:o.reasoning}),
-        o.preserve.map(x=>el('span',{class:'chip keep',text:'keep: '+x})),
-        o.alter.map(x=>el('span',{class:'chip alt',text:'undo: '+x}))));break}
-    case'prompt':ensureStep(t).info.append(el('details',{class:'sec'},el('summary',{text:'Prompt sent to image model'}),el('pre',{text:e.text})));break;
-    case'candidate':{const c=slot(ensureStep(t),e.index);c.img.src=file(e.file);c.sc.textContent='scoring pending…';break}
-    case'scores':{const c=slot(ensureStep(t),e.index);c.sc.replaceChildren(
-      el('div',{},el('b',{text:'legibility '}),e.legibility.toFixed(2)),el('div',{class:'r',text:e.legibility_reason}),
-      el('div',{},el('b',{text:'inheritance '}),e.inheritance.toFixed(2),` (vs original ${e.anchor.toFixed(2)})`),el('div',{class:'r',text:e.inheritance_reason}),
-      el('div',{},el('b',{text:'displacement '}),e.displacement.toFixed(2),`  composite ${e.composite.toFixed(2)}`),
-      bars(e.cand_readings,false),
-      e.gate_fails.length?el('div',{class:'fail',text:'✗ '+e.gate_fails.join('; ')}):el('div',{class:'ev',text:'✓ passed all gates'}));
-      c.fails=e.gate_fails.length;break}
-    case'selected':{const s=ensureStep(t);Object.entries(s.slots).forEach(([k,c])=>c.root.classList.add(+k===e.index?'sel':'rej'));
-      s.why.replaceChildren(el('b',{text:`Selected candidate ${e.index+1}. `}),e.reason);
-      s.status.textContent='';
-      const f=$('#f'+t);if(f){f.querySelector('div').textContent=`step ${t} → candidate ${e.index+1}`}
-      const nf=el('figure',{},el('img',{src:file(e.file)}),el('div',{text:`selected, step ${t}`}));
-      $('#strip').append(nf);break}
-    case'step_end':ensureStep(t).status.remove();break;
-    case'error':ensureStep(t).root.append(el('div',{class:'err',text:e.text}));break;
+    case'step_start':s.inImg.src=file(e.input);if(t===1)stripAdd(file(e.input),'original');break;
+    case'status':s.st.textContent=e.text;$('#status').textContent=`step ${t} · ${e.text}`;$('#status').className='live';break;
+    case'reading':
+      s.reads.replaceChildren(...e.readings.map(r=>el('div',{},el('span',{class:'bar',style:`width:${r.probability*80}px`}),`${pct(r.probability)} ${r.label}`)));
+      why(s,el('p',{},el('b',{text:'Evidence: '}),e.readings.map(r=>r.evidence).join(' · ')));break;
+    case'hypothesis':{const o=e.operation;
+      s.title.textContent=`Step ${t} · undo ${o.name}`;
+      why(s,el('p',{},el('b',{text:'Formed by: '}),e.formation.process));
+      why(s,el('p',{text:e.formation.reasoning}));
+      why(s,el('p',{},el('b',{text:'Why '+o.name+': '}),o.reasoning+(e.banned?` (${e.banned} excluded: used too often)`:'')));
+      why(s,el('p',{},o.preserve.map(x=>el('span',{class:'chip keep',text:x})),o.alter.map(x=>el('span',{class:'chip alt',text:x}))));break}
+    case'prompt':why(s,el('p',{},el('b',{text:'Prompt'}),el('pre',{text:e.text})));break;
+    case'candidate':{const c=slot(s,e.index);c.img.src=file(e.file);break}
+    case'scores':{const c=slot(s,e.index);
+      c.meta.replaceChildren(el('div',{text:`L ${f2(e.legibility)} · I ${f2(e.inheritance)} · D ${f2(e.displacement)}`}),
+        e.gate_fails.length?el('div',{class:'no',text:'✗ '+e.gate_fails[0]}):el('div',{class:'ok',text:'✓'}));
+      why(s,el('p',{},el('b',{text:`Candidate ${e.index+1}: `}),`${e.legibility_reason} ${e.inheritance_reason}`));break}
+    case'selected':
+      Object.entries(s.slots).forEach(([k,c])=>c.root.classList.toggle('sel',+k===e.index));
+      s.outBox.replaceChildren(el('img',{src:file(e.file)}),el('div',{class:'cap',text:`candidate ${e.index+1}`+(e.gates_passed?'':' (no candidate passed gates)')}));
+      s.st.textContent='';
+      stripAdd(file(e.file),`step ${t}`);break;
+    case'step_end':s.st.textContent='';break;
+    case'error':s.root.append(el('div',{class:'err',text:e.text}));break;
     case'run_end':$('#status').textContent='finished';$('#status').className='';break;
   }
 }
@@ -154,7 +141,7 @@ function open_(id){
   $('#status').textContent='loading…';
   es=new EventSource('/stream/'+id);
   es.onmessage=m=>{try{handle(JSON.parse(m.data))}catch(err){console.error(err)}};
-  es.onerror=()=>{es.close()};
+  es.onerror=()=>es.close();
 }
 async function loadLists(select){
   const runs=await (await fetch('/api/runs')).json();
