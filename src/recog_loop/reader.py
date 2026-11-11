@@ -91,6 +91,13 @@ def validate(out: dict, op_names: list[str]) -> None:
     if not (isinstance(rs, list) and len(rs) == 3 and all(
             isinstance(r, dict) and {"label", "probability", "evidence"} <= r.keys() for r in rs)):
         raise ValueError("`readings` must be a list of exactly 3 objects with label, probability, evidence")
+    for r in rs:  # the model sometimes returns "0.4" as a string; coerce, or reject so the call is retried
+        try:
+            r["probability"] = float(r["probability"])
+        except (TypeError, ValueError):
+            raise ValueError("each reading's probability must be a number")
+        if not isinstance(r["label"], str) or not isinstance(r["evidence"], str):
+            raise ValueError("each reading's label and evidence must be strings")
     f = out.get("formation")
     if not (isinstance(f, dict) and {"process", "evidence", "reasoning"} <= f.keys()):
         raise ValueError("`formation` must be an object with process, evidence (list), reasoning")
