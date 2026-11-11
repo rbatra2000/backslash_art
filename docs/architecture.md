@@ -1,111 +1,80 @@
-# How the system works
+# Architecture
 
-The loop walks a material sample **backwards in time**: read the image, infer what happened to the material, undo it, repeat.
+Walk a material sample **backwards in time**: read it, infer what happened to it, undo that, repeat.
 
-## Who does what
+![example chain: original, then three steps back](example_chain.jpg)
 
-| Actor | Model | Sees | Produces |
-|---|---|---|---|
-| **Planner** (reader) | Claude vision (`claude-sonnet-5-5`) | the current image, the lexicon, what was already undone | 3 ranked identities, formation hypothesis, one operation, keep/undo lists |
-| **Image editor** | FLUX 3 Klein (BFL API) | the current image + the assembled prompt | one image: the sample *before* the operation |
-| **Blind judge** | Claude vision, fresh call | before + after images, operation definition only | undone (yes/no), changed, kept, lost |
-| **Blind re-reader** | Claude vision, fresh call | the result image only | 3 ranked identities of the result |
-| **Code** (no model) | Python | files | builds the prompt from a template, pixel-diff flag, writes `events.jsonl` |
+## The loop
 
-**4 model roles, 0 persistent agents.** Every role is a stateless API call (3 Claude + 1 Klein per step, so about 30 + 10 for a 10-step run). Nothing remembers anything between calls; the only state carried forward is the image and the list of operations already undone.
-
-**The identities come from Claude.** The Planner ranks them for the step's input; the Blind re-reader ranks them again for the result. There is no classifier or embedding model. The labels, their order and the evidence are the model's own judgment; their probabilities are kept in `record.json` but are not calibrated and are not shown in the UI.
+```mermaid
+flowchart LR
+    A[image] --> B[plan]
+    B --> C[prompt]
+    C --> D[Klein]
+    D --> E[result]
+    E --> F[reflect]
+    F --> A
+```
 
 ## One step
 
 ```mermaid
-flowchart TD
-    IMG["current image<br/>(step 1: your original)"] --> PLAN
-
-    subgraph PLAN["1 - PLAN (Claude, sees image + lexicon + history)"]
-        direction TB
-        R["3 ranked identities<br/>with evidence"] --> F["formation hypothesis<br/>for the TOP identity"]
-        F --> OP["pick 1 operation<br/>from lexicon.yaml"]
-        OP --> KA["keep list / undo list"]
+sequenceDiagram
+    participant C as Code
+    participant P as Planner (Claude)
+    participant K as Klein
+    participant J as Judge (Claude)
+    participant R as Re-reader (Claude)
+    C->>P: image + lexicon
+    P-->>C: 3 identities, process, operation, keep/undo
+    C->>K: image + prompt from template
+    K-->>C: result image
+    par blind reflection
+        C->>J: before + after
+        J-->>C: undone yes/no, changed, kept, lost
+    and
+        C->>R: result only
+        R-->>C: 3 identities
     end
-
-    PLAN --> PR["2 - PROMPT<br/>(template, no model)<br/>remove undo list, show clean<br/>material underneath, keep keep list"]
-    PR --> GEN["3 - GENERATE one image<br/>(FLUX 3 Klein)"]
-    GEN --> OUT["result image"]
-
-    subgraph REFLECT["4 - REFLECT (two fresh, stateless Claude calls)"]
-        direction LR
-        J["blind judge<br/>before + after only<br/>undone yes or no<br/>changed / kept / lost"]
-        BR["blind re-read<br/>result only<br/>3 ranked identities"]
-    end
-
-    IMG --> J
-    OUT --> J
-    OUT --> BR
-    OUT --> NEXT["5 - becomes the next step's image"]
-    BR -. "shown as next step's 'before' reading" .-> NEXT
-    NEXT -. "repeat (10 steps)" .-> IMG
 ```
 
-## Why a blind re-reader
+4 model roles, 0 persistent agents: every call is stateless.
 
-The project measures how the model's *recognition* shifts as the sample is unmade. The judge can't show that: it compares two images for one operation and returns no identities. The re-reader gives the "after" reading, used two ways:
-
-- the **reading shift** shown under "+ why" (what the result now reads as);
-- the next step's **"before" reading**, so every displayed reading is context-free.
-
-The Planner reads the same image again at the next step, but with history attached, which nudges its identities. So its read picks the operation and the blind read is what's displayed. Dropping the re-reader would save one call per step but mix history into the readings you compare.
-
-## How the operation is picked
+## Picking the operation
 
 ```mermaid
 flowchart LR
-    A["top-ranked identity<br/>e.g. rusted metal casting<br/>with grey mineral crust"] --> B["most likely process<br/>to have happened to<br/>that kind of material<br/>e.g. crust built up"]
-    B --> C["lexicon entry that names it<br/>DEPOSIT"]
-    C --> D["UNDO it:<br/>show the sample before<br/>the crust accumulated"]
+    A[top identity] --> B[most likely process<br/>for that material] --> C[lexicon operation] --> D[undo it]
 ```
 
-- The choice is restricted to the 18 operations in `lexicon.yaml` (three groups: formation, unmaking, reorganization).
-- It picks the process that *happened*, then the loop undoes it. A crust that built up is DEPOSIT; the step removes the crust.
-- Repeats are allowed. Earlier undone steps are shown to the planner only so it doesn't name products that are already gone.
-- All model text is kept terse: caps on words are in the system prompts (labels 8 words, reasoning 10-12, judge lists 2 short phrases).
+## What each call sees
 
-## What stays blind
+```mermaid
+flowchart TB
+    subgraph Planner
+        p1[image] ~~~ p2[lexicon] ~~~ p3[operations already undone]
+    end
+    subgraph Judge
+        j1[before + after] ~~~ j2[operation definition]
+    end
+    subgraph Re-reader
+        r1[result image only]
+    end
+```
+
+## Operation groups (`lexicon.yaml`)
 
 ```mermaid
 flowchart LR
-    subgraph sees["Planner sees"]
-        s1["current image"]
-        s2["lexicon"]
-        s3["operations already undone"]
-    end
-    subgraph blind["Judge and re-reader see ONLY"]
-        b1["the two images<br/>(or just the result)"]
-        b2["operation definition"]
-    end
-    subgraph never["Never shown to judges"]
-        n1["the prompt"]
-        n2["earlier steps"]
-        n3["the planner's reasoning"]
-    end
+    L[lexicon] --> F[formation<br/>DEPOSIT, PRECIPITATE, CRYSTALLIZE, SINTER, CEMENT, INFILTRATE]
+    L --> U[unmaking<br/>DISSOLVE, ERODE, FRACTURE, DELAMINATE, BURN OUT, LEACH]
+    L --> O[reorganization<br/>DEVITRIFY, PHASE SEPARATE, COARSEN, FOLD, CREEP, MIGRATE]
 ```
 
-Every judgement starts from the same fixed system prompt, so no call inherits another's framing.
+## Run output
 
-## What gets recorded
-
+```mermaid
+flowchart LR
+    run[runs/id] --> a[run.json] & b[events.jsonl] & s[step_NN]
+    s --> s1[input.png] & s2[result.png] & s3[record.json]
 ```
-runs/<id>/
-  run.json            config, lexicon, git commit, model names
-  events.jsonl        every stage, followed live by the UI
-  step_01/
-    input.png         what the planner saw
-    result.png        what Klein generated
-    record.json       plan, prompt, seed, judge reflection, blind re-read, flags
-```
-
-## Known limits
-
-- Nothing checks that the chosen operation is physically coherent beyond Claude's reasoning and the lexicon wording.
-- Klein has no strength setting, so how much it undoes depends on prompt wording alone.
-- The pixel diff is the only measured number; it only raises an "image barely changed" flag.
