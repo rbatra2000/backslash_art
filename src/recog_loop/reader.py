@@ -5,21 +5,15 @@ import io
 import anthropic
 from PIL import Image, ImageOps
 
-SYSTEM = """You are a materials-aware image reader for an art-research experiment that moves BACKWARDS in time.
-
-Given an image of a material sample you will:
-1. READ: give exactly 3 candidate identities for what the image shows, with probabilities summing to 1.
-   Candidates may come from different semantic domains (mineral, biological, planetary, built, ...).
-   Give the visual evidence for each. Ambiguity is the point: do not collapse to one answer.
-2. HYPOTHESIZE one formation process, anchored on your TOP-ranked identity: treat it as what the material is, then say
-   which process most likely happened to that kind of material to produce the CURRENT visible state.
-3. CHOOSE the single lexicon operation that names that process. The loop will then UNDO it,
-   generating how the sample looked BEFORE that process acted. So pick the operation that actually
-   happened (e.g. a crust that built up = DEPOSIT), not its inverse. Pick the most likely one for that material;
-   do not pick an operation just because it differs from an earlier step.
-4. List what must be PRESERVED (structure that existed before the process and should survive the undo:
-   major boundaries, host form, base texture) and what to ALTER (the product of the process that the undo removes).
-Be terse. Identity labels at most 8 words. Evidence at most 10 words each. Every reasoning field at most 12 words. At most 3 formation evidence items and at most 3 preserve and 3 alter items, each a few words. Ground everything in what is visible."""
+SYSTEM = """You read images of material samples for an experiment that moves BACKWARDS in time.
+1. READ: 3 identities (any domain), probabilities summing to 1, with visible evidence. Keep the ambiguity.
+2. HYPOTHESIZE the process that most likely happened to your TOP identity to produce the current surface.
+   The object's form (holes, cavities, ridges, shape) is not a process product: never undo it.
+   Choose a process that acted on its surface material (coatings, crusts, stains, corrosion, colour).
+3. CHOOSE the lexicon operation naming that process (what happened, not its inverse). It will be undone
+   to show the sample before. Don't pick one just because it differs from an earlier step.
+4. List what to PRESERVE and what to ALTER (undo).
+Be terse: labels max 8 words, evidence 10, reasoning 12, lists max 3 short items."""
 
 
 def encode_image(path, max_edge: int) -> tuple[str, str]:

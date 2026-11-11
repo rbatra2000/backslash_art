@@ -12,15 +12,22 @@ BFL_URL = "https://api.bfl.ai/v1/flux-3-image-klein"
 TERMINAL_FAIL = {"Error", "Failed", "Request Moderated", "Content Moderated", "Task not found", "No Card Generated"}
 
 
-def build_reverse_prompt(op_name: str, op_spec: dict, reading: dict) -> str:
-    """Assemble the image prompt from the structured record. Backwards semantics: show the sample BEFORE the op.
-    Leads with a concrete visible target and demands a clear change (Klein otherwise makes minimal edits)."""
+STRENGTH = {  # Klein has no strength setting; prompt wording is the only lever
+    "subtle": "Make a small but visible change.",
+    "medium": "The change must be clearly visible.",
+    "strong": ("Make a dramatic change: remove it entirely with no trace left, and show the object as it looked "
+               "long before this happened. Do not keep a faded or partial version."),
+}
+
+
+def build_reverse_prompt(op_name: str, op_spec: dict, reading: dict, strength: str = "medium") -> str:
+    """Template prompt: show the sample before the operation."""
     alter = "; ".join(reading["operation"]["alter"])
     preserve = "; ".join(reading["operation"]["preserve"])
     return (
         f"Edit this photo to show the same object before {op_name.lower().replace('_', ' ')} happened to it. "
         f"Completely remove: {alter}. {op_spec['undo_prompt'].capitalize()}. "
-        f"Show the clean material that was underneath, not a faded or blurred version; the change must be clearly visible. "
+        f"Show the clean material that was underneath, not a faded or blurred version. {STRENGTH[strength]} "
         f"Keep the object's shape and layout: {preserve}. Same framing and camera angle. Photographic macro, not a drawing."
     )
 

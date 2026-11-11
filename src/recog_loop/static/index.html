@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Before Recognition</title>
+<title>before_recognition</title>
 <style>
 :root{--bg:#f3f0e8;--ink:#1a1917;--mute:#7b766b;--line:#1a1917;--soft:#d9d4c7;--accent:#d4571c;--ok:#2d7a4a;--bad:#c23a2b;--glow:#ef8e4633}
 @media (prefers-color-scheme:dark){:root{--bg:#141414;--ink:#e8e4da;--mute:#8d887c;--line:#e8e4da;--soft:#34322d;--accent:#ef8e46;--ok:#7cc79a;--bad:#ee6a5a;--glow:#ef8e4622}}
@@ -63,7 +63,7 @@ pre{white-space:pre-wrap;margin:4px 0;font:inherit}
 </header>
 <main>
   <div id="strip"></div>
-  <div id="timeline"><div class="empty">// pick a run or start a new one</div></div>
+  <div id="timeline"><div class="empty">// pick a run</div></div>
 </main>
 <script>
 const $=s=>document.querySelector(s);
@@ -105,7 +105,7 @@ function handle(e){
     case'step_start':s.inImg.src=file(e.input);if(t===1)stripAdd(file(e.input),'original');break;
     case'status':s.st.textContent=e.text;$('#status').textContent=`step ${t} · ${e.text}`;$('#status').className='live';break;
     case'reading':
-      s.reads.replaceChildren(el('div',{class:'cap l',text:'reads as, most to least likely'}),...ranked(e.readings));
+      s.reads.replaceChildren(el('div',{class:'cap l',text:'reads as'}),...ranked(e.readings));
       why(s,el('p',{},el('b',{text:'Evidence: '}),e.readings.map(r=>r.evidence).join(' · ')));break;
     case'hypothesis':{const o=e.operation;
       s.title.textContent=`step ${String(t).padStart(2,'0')} -- undo ${o.name}`;

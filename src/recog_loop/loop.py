@@ -1,8 +1,4 @@
-"""The recursive backwards loop. Writes runs/<id>/{run.json, events.jsonl, step_XX/...}.
-
-One image per step, no retry, no selection: the chain is the record. After each image a blind reader
-re-reads it, so you can see how its identity shifts.
-"""
+"""Backwards loop: one image per step, then a blind re-read. Writes runs/<timestamp>/."""
 import json
 import subprocess
 import time
@@ -44,10 +40,9 @@ def _history_context(done: list[dict]) -> str | None:
     if not done:
         return None
     lines = [f"{i}. {d['op']}: {d['process']}" for i, d in enumerate(done, 1)]
-    return ("Earlier steps already undone, in order:\n" + "\n".join(lines) +
-            "\nThe image you see is the sample AFTER those were undone. Judge the material as it looks now and choose "
-            "the process most likely to have happened to it. The same operation may repeat if it is still the most "
-            "likely and its product is still visible; do not name a product that is already gone.")
+    return ("Already undone, in order:\n" + "\n".join(lines) +
+            "\nThis image is the sample after those. Choose the most likely process for it as it looks now; "
+            "repeats are fine; don't name products already gone.")
 
 
 def run(image: Path, steps: int, cfg: dict, lex: dict, keys: dict, run_id: str | None = None) -> Path:
@@ -89,7 +84,7 @@ def run(image: Path, steps: int, cfg: dict, lex: dict, keys: dict, run_id: str |
         ev.emit("hypothesis", t, formation=plan["formation"], operation=plan["operation"])
 
         # 2. PROMPT, 3. GENERATE one image
-        prompt = build_reverse_prompt(op, lex[op], plan)
+        prompt = build_reverse_prompt(op, lex[op], plan, cfg["image"]["strength"])
         ev.emit("prompt", t, text=prompt)
         ev.emit("status", t, text="generating image")
         seed = cfg["run"]["base_seed"] + t * 100

@@ -1,14 +1,14 @@
-"""Local UI server: follows runs/<id>/events.jsonl (live or replay) and can start runs. Binds to localhost only."""
+"""Local UI: follows runs/<id>/events.jsonl (live or replay) and starts runs. Localhost only."""
 import json
 import re
-import subprocess
-import sys
+import threading
 import time
 from pathlib import Path
 
 from flask import Flask, Response, abort, jsonify, request, send_from_directory
 
-from .config import ROOT
+from .config import ROOT, load_config, load_env, load_lexicon
+from .loop import run
 
 RUNS = ROOT / "runs"
 ASSETS = ROOT / "assets"
@@ -75,19 +75,16 @@ def stream(run_id):
 @app.post("/api/start")
 def start():
     body = request.get_json(force=True)
-    image = ASSETS / Path(str(body.get("image", ""))).name  # assets/ only, no path traversal
+    image = ASSETS / Path(str(body.get("image", ""))).name  # assets/ only
     if not image.exists():
         return jsonify(error="image not found in assets/"), 400
     steps = int(body.get("steps", 3))
     if not 1 <= steps <= 20:
         return jsonify(error="steps must be 1-20"), 400
     run_id = time.strftime("%Y%m%d-%H%M%S")
-    log = (RUNS / f"{run_id}.log").open("w") if RUNS.exists() else subprocess.DEVNULL
-    subprocess.Popen([sys.executable, "-m", "recog_loop", "run", "--image", str(image), "--steps", str(steps),
-                      "--run-id", run_id], cwd=ROOT, env={**__import__("os").environ, "PYTHONPATH": str(ROOT / "src")},
-                     stdout=log, stderr=subprocess.STDOUT)
-    # wait briefly for events.jsonl so the page can attach
-    for _ in range(50):
+    cfg, lex, keys = load_config(), load_lexicon(), load_env()
+    threading.Thread(target=run, args=(image, steps, cfg, lex, keys, run_id), daemon=True).start()
+    for _ in range(50):  # wait for events.jsonl so the page can attach
         if (RUNS / run_id / "events.jsonl").exists():
             break
         time.sleep(0.1)

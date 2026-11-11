@@ -1,13 +1,14 @@
-# All tunable experiment parameters live here. Secrets live in .env, not here.
+# Settings. Secrets go in .env.
 
 run:
   steps: 10
-  base_seed: 1000          # step t uses seed base_seed + t*100
+  base_seed: 1000
 
 models:
-  reader: claude-sonnet-5-5          # vision: readings, hypothesis, operation
-  image_editor: flux-3-image-klein   # BFL endpoint /v1/flux-3-image-klein
+  reader: claude-sonnet-5-5
+  image_editor: flux-3-image-klein
 
 image:
-  max_edge: 1024           # input is downscaled to this before editing
+  max_edge: 1024
   output_format: png
+  strength: strong         # subtle | medium | strong

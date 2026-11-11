@@ -1,7 +1,4 @@
-# Operation lexicon. Each entry is a FORWARD material process. The loop runs it in
-# REVERSE: given an image showing the result of the process, generate how the sample
-# looked before it. `undo_prompt` describes that reversal.
-# Groups and wording are a first draft and expected to be refined after tests.
+# Forward processes. The loop undoes the chosen one (undo_prompt). First draft.
 
 groups:
   formation:           # processes that add or build matter -> undo = take it away
