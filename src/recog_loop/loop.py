@@ -1,4 +1,4 @@
-"""Backwards loop: one image per step, then a blind re-read. Writes runs/<timestamp>/."""
+"""Backwards loop: plan, undo with Klein, repeat. Writes runs/<timestamp>/."""
 import json
 import subprocess
 import time
@@ -35,16 +35,6 @@ def _normalise(src: Path, dst: Path, max_edge: int):
     img.save(dst, "PNG")
 
 
-def _history_context(done: list[dict]) -> str | None:
-    """Planner-only context: what has already been undone, so each step reaches further back."""
-    if not done:
-        return None
-    lines = [f"{i}. {d['op']}: {d['process']}" for i, d in enumerate(done, 1)]
-    return ("Already undone, in order:\n" + "\n".join(lines) +
-            "\nThis image is the sample after those. Choose the most likely process for it as it looks now; "
-            "repeats are fine; don't name products already gone.")
-
-
 def run(image: Path, steps: int, cfg: dict, lex: dict, keys: dict, run_id: str | None = None) -> Path:
     run_id = run_id or time.strftime("%Y%m%d-%H%M%S")
     run_dir = ROOT / "runs" / run_id
@@ -62,8 +52,6 @@ def run(image: Path, steps: int, cfg: dict, lex: dict, keys: dict, run_id: str |
     current = run_dir / "step_01" / "input.png"
     current.parent.mkdir(exist_ok=True)
     _normalise(image, current, cfg["image"]["max_edge"])
-    done_steps: list[dict] = []         # planner history: {op, process}
-    prev_blind: dict | None = None      # blind re-read of the previous output = this step's "before" reading
 
     for t in range(1, steps + 1):
         sd = run_dir / f"step_{t:02d}"
@@ -75,12 +63,9 @@ def run(image: Path, steps: int, cfg: dict, lex: dict, keys: dict, run_id: str |
 
         # 1. PLAN: read the image, hypothesize formation, choose the operation to undo
         ev.emit("status", t, text="reading image")
-        plan = read_image(inp, lex, cfg, ak, prior_context=_history_context(done_steps))
+        plan = read_image(inp, lex, cfg, ak)
         op = plan["operation"]["name"]
-        # The "before" reading shown must be blind. Step 1's planner has no context so it is blind;
-        # later steps reuse the blind re-read already made of this exact image.
-        before = plan if prev_blind is None else prev_blind
-        ev.emit("reading", t, readings=before["readings"], scale=before["scale_estimate"])
+        ev.emit("reading", t, readings=plan["readings"], scale=plan["scale_estimate"])
         ev.emit("hypothesis", t, formation=plan["formation"], operation=plan["operation"])
 
         # 2. PROMPT, 3. GENERATE one image
@@ -92,19 +77,14 @@ def run(image: Path, steps: int, cfg: dict, lex: dict, keys: dict, run_id: str |
         meta = editor.edit(inp, prompt, seed, out)
         ev.emit("result", t, file=str(out.relative_to(run_dir)))
 
-        # 4. RE-READ the result blind (no history); this is the "after" reading and the next step's "before"
-        ev.emit("status", t, text="re-reading result")
-        after = read_image(out, lex, cfg, ak)
-        ev.emit("after", t, after_readings=after["readings"])
-
         (sd / "record.json").write_text(json.dumps({
-            "step": t, "operation": op, "plan": plan, "before_reading": before,
-            "prompt": prompt, "seed": seed, "editor_meta": meta,
-            "after_reading": after}, indent=2))
-        prev_blind = after
+            "step": t, "operation": op, "plan": plan, "prompt": prompt, "seed": seed, "editor_meta": meta}, indent=2))
         current = out
-        done_steps.append({"op": op, "process": plan["formation"]["process"]})
         ev.emit("step_end", t)
 
+    ev.emit("status", None, text="reading final image")
+    final = read_image(current, lex, cfg, ak)
+    (run_dir / "final.json").write_text(json.dumps(final, indent=2))
+    ev.emit("final", None, readings=final["readings"], file=str(current.relative_to(run_dir)))
     ev.emit("run_end", None)
     return run_dir

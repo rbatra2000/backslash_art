@@ -2,7 +2,7 @@
 
 Walk a material sample **backwards in time**: read it, infer what happened to it, undo that, repeat.
 
-![example chain: original, then three steps back](example_chain.jpg)
+![example chain](example_chain.jpg)
 
 ## The loop
 
@@ -11,9 +11,7 @@ flowchart LR
     A[image] --> B[plan]
     B --> C[prompt]
     C --> D[Klein]
-    D --> E[result]
-    E --> F[re-read]
-    F --> A
+    D --> A
 ```
 
 ## One step
@@ -23,16 +21,13 @@ sequenceDiagram
     participant C as Code
     participant P as Planner (Claude)
     participant K as Klein
-    participant R as Re-reader (Claude)
     C->>P: image + lexicon
     P-->>C: 3 identities, process, operation, keep/undo
     C->>K: image + prompt from template
     K-->>C: result image
-    C->>R: result only
-    R-->>C: 3 identities
 ```
 
-3 model roles, 0 persistent agents: every call is stateless.
+2 model roles, 0 persistent agents: every call is stateless. The planner sees only the current image and the lexicon, so every reading starts from the same point. One last read after the final step.
 
 ## Picking the operation
 
@@ -41,19 +36,7 @@ flowchart LR
     A[top identity] --> B[most likely process<br/>for that material] --> C[lexicon operation] --> D[undo it]
 ```
 
-## What each call sees
-
-```mermaid
-flowchart TB
-    subgraph Planner
-        p1[image] ~~~ p2[lexicon] ~~~ p3[operations already undone]
-    end
-    subgraph Re-reader
-        r1[result image only]
-    end
-```
-
-## Operation groups (`lexicon.yaml`)
+## Operation groups
 
 ```mermaid
 flowchart LR
@@ -66,6 +49,6 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    run[runs/id] --> a[run.json] & b[events.jsonl] & s[step_NN]
+    run[runs/timestamp] --> a[run.json] & b[events.jsonl] & f[final.json] & s[step_NN]
     s --> s1[input.png] & s2[result.png] & s3[record.json]
 ```

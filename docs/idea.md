@@ -54,7 +54,7 @@ step 8     black flint
 step 10    carved plaster sculpture
 ```
 
-Each step is read again with no history. The reading is an event that redirects the next step.
+Each step reads the image fresh, with no history. The reading is an event that redirects the next step.
 
 ## How it is meant to read
 

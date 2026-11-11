@@ -117,8 +117,11 @@ function handle(e){
     case'result':
       s.outBox.replaceChildren(el('img',{src:file(e.file)}),el('div',{class:'cap',text:'result'}));
       stripAdd(file(e.file),`step ${t}`);break;
-    case'after':
-      why(s,el('p',{},el('b',{text:'Result reads as: '}),e.after_readings.map(r=>r.label).join(' / ')));break;
+    case'final':{
+      const f=el('div',{class:'step'},el('h2',{},el('span',{text:'final'})),el('div',{class:'rule',text:'='.repeat(120)}),
+        el('div',{class:'top'},el('div',{},el('img',{src:file(e.file)})),el('div',{class:'arrow',text:''}),el('div'),
+          el('div',{class:'reads'},el('div',{class:'cap l',text:'reads as'}),...ranked(e.readings))));
+      $('#timeline').append(f);break}
     case'step_end':s.st.textContent='';break;
     case'error':s.root.append(el('div',{class:'err',text:e.text}));break;
     case'run_end':$('#status').textContent='finished';$('#status').className='';break;

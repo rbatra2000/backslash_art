@@ -11,7 +11,7 @@ SYSTEM = """You read images of material samples for an experiment that moves BAC
    The object's form (holes, cavities, ridges, shape) is not a process product: never undo it.
    Choose a process that acted on its surface material (coatings, crusts, stains, corrosion, colour).
 3. CHOOSE the lexicon operation naming that process (what happened, not its inverse). It will be undone
-   to show the sample before. Don't pick one just because it differs from an earlier step.
+   to show the sample before.
 4. List what to PRESERVE and what to ALTER (undo).
 Be terse: labels max 8 words, evidence 10, reasoning 12, lists max 3 short items."""
 
@@ -104,14 +104,11 @@ def validate(out: dict, op_names: list[str]) -> None:
         raise ValueError("operation.preserve and operation.alter must be lists of strings")
 
 
-def read_image(path, lexicon: dict, cfg: dict, api_key: str, prior_context: str | None = None,
-               retries: int = 3) -> dict:
-    """One reader call. Each call is stateless; pass prior_context only if you want history-aware reading."""
+def read_image(path, lexicon: dict, cfg: dict, api_key: str, retries: int = 3) -> dict:
+    """One stateless reader call."""
     data, media = encode_image(path, cfg["image"]["max_edge"])
     client = anthropic.Anthropic(api_key=api_key)
     text = _lexicon_text(lexicon)
-    if prior_context:
-        text += f"\n\n{prior_context}"
     last_err = None
     for attempt in range(retries):
         note = f"\n\nYour previous report was invalid: {last_err}. Fix it." if last_err else ""
