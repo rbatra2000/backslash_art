@@ -32,7 +32,7 @@ Outputs go to `runs/<run_id>/` (git-ignored): per-step images, `record.json` wit
 
 | File | Purpose |
 |---|---|
-| `config.yaml` | Steps, candidates, models, selection gates, score weights |
+| `config.yaml` | Steps, seed, models, image size |
 | `lexicon.yaml` | Operations in three groups, each with an `undo_prompt` and `visible_signature` |
 | `src/recog_loop/` | Reader, editor, scoring, loop, UI server |
 
@@ -51,7 +51,6 @@ operations already undone; it anchors on its top-ranked reading and picks the pr
 After Klein generates the image, a **blind re-reader** sees only the result, so the "after" reading has no history in it and becomes
 the next step's "before" reading.
 
-The only number is an objective pixel difference. It raises an "image barely changed" flag (`gates.pixel_diff_min`) and nothing else:
-no retry, no selection. Model-stated probabilities are kept in `record.json` but not shown; they are not calibrated.
+There is no scoring, retry or selection: the chain is the record. Model-stated probabilities are kept in `record.json` but not shown; they are not calibrated.
 
 _Status: planner, editor, re-reader, loop and live UI work._

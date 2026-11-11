@@ -11,7 +11,3 @@ models:
 image:
   max_edge: 1024           # input is downscaled to this before editing
   output_format: png
-
-# Flags only (nothing is selected or retried; the chain is the record).
-gates:
-  pixel_diff_min: 0.05       # objective: mean pixel change below this flags "image barely changed"

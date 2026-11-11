@@ -8,7 +8,7 @@ import subprocess
 import time
 from pathlib import Path
 
-from PIL import Image, ImageChops, ImageOps, ImageStat
+from PIL import Image, ImageOps
 
 from .config import ROOT
 from .editor import KleinEditor, build_reverse_prompt
@@ -39,14 +39,6 @@ def _normalise(src: Path, dst: Path, max_edge: int):
     img.save(dst, "PNG")
 
 
-def _pixel_diff(a: Path, b: Path) -> float:
-    """Mean absolute grayscale difference, 0-1. Only used as an objective 'image barely changed' flag."""
-    size = (256, 341)
-    A = Image.open(a).convert("L").resize(size)
-    B = Image.open(b).convert("L").resize(size)
-    return round(ImageStat.Stat(ImageChops.difference(A, B)).mean[0] / 255, 4)
-
-
 def _history_context(done: list[dict]) -> str | None:
     """Planner-only context: what has already been undone, so each step reaches further back."""
     if not done:
@@ -63,7 +55,6 @@ def run(image: Path, steps: int, cfg: dict, lex: dict, keys: dict, run_id: str |
     run_dir = ROOT / "runs" / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
     ev = Events(run_dir / "events.jsonl")
-    g = cfg["gates"]
     model, ak = cfg["models"]["reader"], keys["ANTHROPIC_API_KEY"]
     editor = KleinEditor(keys["BFL_API_KEY"], cfg["image"]["max_edge"], cfg["image"]["output_format"])
 
@@ -109,14 +100,12 @@ def run(image: Path, steps: int, cfg: dict, lex: dict, keys: dict, run_id: str |
         # 4. RE-READ the result blind (no history); this is the "after" reading and the next step's "before"
         ev.emit("status", t, text="re-reading result")
         after = read_image(out, lex, cfg, ak)
-        pd = _pixel_diff(inp, out)
-        flags = ["image barely changed"] if pd < g["pixel_diff_min"] else []
-        ev.emit("after", t, after_readings=after["readings"], flags=flags)
+        ev.emit("after", t, after_readings=after["readings"])
 
         (sd / "record.json").write_text(json.dumps({
             "step": t, "operation": op, "plan": plan, "before_reading": before,
             "prompt": prompt, "seed": seed, "editor_meta": meta,
-            "after_reading": after, "pixel_diff": pd, "flags": flags}, indent=2))
+            "after_reading": after}, indent=2))
         prev_blind = after
         current = out
         done_steps.append({"op": op, "process": plan["formation"]["process"]})
