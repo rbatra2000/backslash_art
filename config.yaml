@@ -2,8 +2,7 @@
 
 run:
   steps: 10
-  candidates: 1            # images per step. 1 = purest record (no retry, no selection); 3 = collaborator protocol
-  base_seed: 1000          # candidate k at step t uses base_seed + t*100 + k
+  base_seed: 1000          # step t uses seed base_seed + t*100
 
 models:
   reader: claude-sonnet-5-5          # vision: readings, hypothesis, operation, judging
@@ -13,19 +12,7 @@ image:
   max_edge: 1024           # input is downscaled to this before editing
   output_format: png
 
-# Selection gates (0-1). Candidates failing a gate are rejected before ranking.
-# Starting guesses; calibrate after the first runs and record changes in git.
+# Flags only (nothing is selected or retried; the chain is the record).
 gates:
-  legibility_floor: 0.4      # was the undo visibly performed
-  inheritance_floor: 0.5     # does structure from the input survive
-  anchor_floor: 0.3          # inheritance vs the original image_0
-  displacement_saturation: 0.5  # displacement >= this counts as full marks in the composite
-  displacement_min: 0.05     # reading distribution must move at least this much
-  pixel_diff_min: 0.05       # mean pixel change vs input (0-1); below this the step barely changed
-  no_repeat_window: 2        # don't match the reading distribution of the last N steps
-  max_same_op_in_row: 2
-
-score_weights:
-  legibility: 1.0
-  inheritance: 1.0
-  displacement: 1.0
+  pixel_diff_min: 0.05       # objective: mean pixel change below this flags "image barely changed"
+  max_same_op_in_row: 2      # planner may not pick the same operation more than this many times in a row
