@@ -10,8 +10,8 @@ PYTHONPATH=src python -m recog_loop run --image assets/IMG_3572.JPG
 PYTHONPATH=src python -m recog_loop serve   # UI: http://127.0.0.1:5000
 ```
 
-- `config.yaml`: steps, seed, models, strength. `lexicon.yaml`: operations.
+- `config.yaml`: steps, seed, model, strength. `lexicon.yaml`: operations.
 - Output: `runs/<timestamp>/` (git-ignored): `step_NN/{input,result}.png`, `record.json`, `final.json`, `events.jsonl`, `run.json`.
 - No scoring, retries or selection. One image per step; the chain is the record.
-- Idea: [docs/idea.md](docs/idea.md). Diagrams: [docs/architecture.md](docs/architecture.md).
+- Idea and diagrams: [docs/overview.md](docs/overview.md).
 - Commits explain why each change was made.

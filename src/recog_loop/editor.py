@@ -1,8 +1,7 @@
-"""Image editing: ImageEditor interface + BFL FLUX 3 Klein backend, and the reverse-prompt builder."""
+"""Reverse-prompt template and the FLUX 3 Klein (Black Forest Labs) client."""
 import base64
 import io
 import time
-from abc import ABC, abstractmethod
 from pathlib import Path
 
 import requests
@@ -10,7 +9,6 @@ from PIL import Image, ImageOps
 
 BFL_URL = "https://api.bfl.ai/v1/flux-3-image-klein"
 TERMINAL_FAIL = {"Error", "Failed", "Request Moderated", "Content Moderated", "Task not found", "No Card Generated"}
-
 
 STRENGTH = {  # Klein has no strength setting; prompt wording is the only lever
     "subtle": "Make a small but visible change.",
@@ -32,13 +30,7 @@ def build_reverse_prompt(op_name: str, op_spec: dict, reading: dict, strength: s
     )
 
 
-class ImageEditor(ABC):
-    @abstractmethod
-    def edit(self, image_path: Path, prompt: str, seed: int, out_path: Path) -> dict:
-        """Write the edited image to out_path and return metadata (seed, prompt, cost...)."""
-
-
-class KleinEditor(ImageEditor):
+class KleinEditor:
     def __init__(self, api_key: str, max_edge: int = 1024, output_format: str = "png",
                  poll_interval: float = 1.0, timeout: float = 300):
         self.headers = {"x-key": api_key, "Content-Type": "application/json", "accept": "application/json"}

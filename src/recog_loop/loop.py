@@ -40,7 +40,7 @@ def run(image: Path, steps: int, cfg: dict, lex: dict, keys: dict, run_id: str |
     run_dir = ROOT / "runs" / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
     ev = Events(run_dir / "events.jsonl")
-    model, ak = cfg["models"]["reader"], keys["ANTHROPIC_API_KEY"]
+    ak = keys["ANTHROPIC_API_KEY"]
     editor = KleinEditor(keys["BFL_API_KEY"], cfg["image"]["max_edge"], cfg["image"]["output_format"])
 
     (run_dir / "run.json").write_text(json.dumps({

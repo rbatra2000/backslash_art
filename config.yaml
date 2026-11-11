@@ -6,7 +6,6 @@ run:
 
 models:
   reader: claude-sonnet-5-5
-  image_editor: flux-3-image-klein
 
 image:
   max_edge: 1024

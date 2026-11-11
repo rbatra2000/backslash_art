@@ -38,7 +38,6 @@ main{max-width:960px;margin:0 auto;padding:8px 24px 80px}
 .arrow{color:var(--mute);text-align:center;padding-top:80px}
 .cap{font-size:11px;color:var(--mute);margin-top:9px}
 .reads div{margin:1px 0}.reads .l{margin:0 0 4px}
-.refl{margin-top:14px}.refl div{margin:2px 0}
 .no{color:var(--bad)}
 details{margin-top:14px}
 summary{cursor:pointer;color:var(--mute);list-style:none}summary::-webkit-details-marker{display:none}
@@ -85,11 +84,10 @@ function ensure(t){
   s.inImg=el('img');
   s.outBox=el('div',{},el('div',{class:'ph'}),el('div',{class:'cap',text:'result'}));
   s.reads=el('div',{class:'reads'});
-  s.refl=el('div',{class:'refl'});
   s.why=el('div',{class:'why'});
   s.root=el('div',{class:'step'},
     el('h2',{},s.title,s.st),el('div',{class:'rule',text:'='.repeat(120)}),
-    el('div',{class:'top'},el('div',{},s.inImg,el('div',{class:'cap',text:'before'})),el('div',{class:'arrow',text:'->'}),s.outBox,el('div',{},s.reads,s.refl)),
+    el('div',{class:'top'},el('div',{},s.inImg,el('div',{class:'cap',text:'before'})),el('div',{class:'arrow',text:'->'}),s.outBox,s.reads),
     el('details',{},el('summary',{text:'+ why'}),s.why));
   $('#timeline').append(s.root);
   return steps[t]=s;
