@@ -16,6 +16,8 @@ def main():
     rn.add_argument("--image", required=True)
     rn.add_argument("--steps", type=int, default=None, help="default from config.yaml")
     rn.add_argument("--run-id", default=None)
+    sv = sub.add_parser("serve", help="live + replay UI on localhost")
+    sv.add_argument("--port", type=int, default=5000)
     args = p.parse_args()
 
     if args.cmd == "read":
@@ -23,6 +25,10 @@ def main():
         keys = load_env(required=["ANTHROPIC_API_KEY"])
         out = read_image(args.image, load_lexicon(), load_config(), keys["ANTHROPIC_API_KEY"])
         print(json.dumps(out, indent=2))
+
+    if args.cmd == "serve":
+        from .serve import main as serve_main
+        serve_main(args.port)
 
     if args.cmd == "run":
         from pathlib import Path

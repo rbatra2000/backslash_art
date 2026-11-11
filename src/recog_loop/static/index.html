@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Before Recognition</title>
+<style>
+:root{--bg:#f6f5f2;--card:#fff;--ink:#1d1c1a;--mute:#6f6b64;--line:#e2dfd8;--accent:#b5541c;--ok:#2f7d4f;--bad:#b3362b;--sel:#b5541c22}
+@media (prefers-color-scheme:dark){:root{--bg:#141413;--card:#1e1d1b;--ink:#ecebe7;--mute:#9a968d;--line:#33312d;--accent:#e08a52;--ok:#6fbf8e;--bad:#e27a6f;--sel:#e08a5222}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,sans-serif}
+header{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+h1{font-size:15px;margin:0 8px 0 0;font-weight:650}
+select,input,button{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:6px;padding:5px 8px}
+button{cursor:pointer;background:var(--accent);color:#fff;border-color:var(--accent)}
+input[type=number]{width:60px}
+#status{margin-left:auto;color:var(--mute)}
+#status.live::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);margin-right:6px;animation:p 1s infinite}
+@keyframes p{50%{opacity:.25}}
+main{max-width:1100px;margin:0 auto;padding:16px}
+#strip{display:flex;gap:8px;overflow-x:auto;padding-bottom:10px;margin-bottom:14px}
+#strip figure{margin:0;flex:0 0 auto;width:110px;text-align:center;font-size:11px;color:var(--mute)}
+#strip img{width:110px;height:146px;object-fit:cover;border-radius:6px;border:1px solid var(--line);display:block}
+.step{background:var(--card);border:1px solid var(--line);border-radius:10px;margin-bottom:16px;overflow:hidden}
+.step>h2{margin:0;padding:10px 14px;font-size:14px;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:baseline}
+.step>h2 small{color:var(--mute);font-weight:400}
+.body{padding:14px;display:grid;grid-template-columns:200px 1fr;gap:16px}
+@media(max-width:700px){.body{grid-template-columns:1fr}}
+.body img{width:100%;border-radius:6px;display:block}
+.sec{margin-bottom:12px}
+.sec h3{margin:0 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--mute)}
+.bar{display:flex;align-items:center;gap:8px;margin:3px 0}
+.bar .t{height:8px;background:var(--accent);border-radius:4px;min-width:2px}
+.bar .l{font-size:13px}
+.ev{color:var(--mute);font-size:12px;margin:0 0 4px 0}
+.chip{display:inline-block;border:1px solid var(--line);border-radius:99px;padding:1px 8px;margin:2px 4px 2px 0;font-size:12px}
+.chip.keep{border-color:var(--ok);color:var(--ok)}.chip.alt{border-color:var(--bad);color:var(--bad)}
+details summary{cursor:pointer;color:var(--mute);font-size:12px}
+pre{white-space:pre-wrap;margin:6px 0 0;font:12px/1.4 ui-monospace,monospace;color:var(--mute)}
+.cands{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:0 14px 14px}
+@media(max-width:700px){.cands{grid-template-columns:1fr}}
+.cand{border:2px solid var(--line);border-radius:8px;padding:6px;min-height:80px}
+.cand.sel{border-color:var(--accent);background:var(--sel)}
+.cand.rej{opacity:.8}
+.cand img{width:100%;border-radius:5px;display:block}
+.sc{font-size:12px;margin-top:6px}
+.sc b{font-weight:600}
+.sc .r{color:var(--mute);margin:1px 0 5px}
+.fail{color:var(--bad);font-size:12px}
+.why{padding:0 14px 14px;color:var(--mute)}
+.why b{color:var(--accent)}
+.status{padding:8px 14px;color:var(--mute);font-style:italic;border-top:1px solid var(--line)}
+.err{color:var(--bad);padding:8px 14px}
+.empty{color:var(--mute);text-align:center;padding:60px 0}
+</style>
+</head>
+<body>
+<header>
+  <h1>Before Recognition</h1>
+  <select id="runs" title="past runs"></select>
+  <span style="color:var(--mute)">or new run:</span>
+  <select id="asset"></select>
+  <input id="steps" type="number" min="1" max="20" value="3" title="steps">
+  <button id="start">Start</button>
+  <span id="status">idle</span>
+</header>
+<main>
+  <div id="strip"></div>
+  <div id="timeline"><div class="empty">Pick a run or start a new one.</div></div>
+</main>
+<script>
+const $=s=>document.querySelector(s);
+const el=(tag,attrs={},...kids)=>{const e=document.createElement(tag);for(const[k,v]of Object.entries(attrs)){if(k==='class')e.className=v;else if(k==='text')e.textContent=v;else e.setAttribute(k,v)}for(const c of kids.flat())if(c!=null)e.append(c);return e};
+const pct=x=>Math.round(x*100)+'%';
+let es=null,runId=null,steps={};
+
+function bars(readings,showEvidence){
+  const w=el('div');
+  for(const r of readings){
+    w.append(el('div',{class:'bar'},el('div',{class:'t',style:`width:${Math.max(2,r.probability*160)}px`}),
+      el('span',{class:'l',text:`${pct(r.probability)}  ${r.label}`})));
+    if(showEvidence&&r.evidence)w.append(el('div',{class:'ev',text:r.evidence}));
+  }
+  return w;
+}
+function ensureStep(t){
+  if(steps[t])return steps[t];
+  const s={};
+  s.root=el('div',{class:'step'});
+  s.title=el('h2',{},`Step ${t}`,s.sub=el('small',{}));
+  s.img=el('img');
+  s.info=el('div');
+  s.body=el('div',{class:'body'},el('div',{},s.img,el('div',{class:'ev',text:'input (earlier steps go backwards in time)'})),s.info);
+  s.cands=el('div',{class:'cands'});
+  s.why=el('div',{class:'why'});
+  s.status=el('div',{class:'status'});
+  s.root.append(s.title,s.body,s.cands,s.why,s.status);
+  $('#timeline').append(s.root);
+  s.slots={};
+  return steps[t]=s;
+}
+function slot(s,i){
+  if(s.slots[i])return s.slots[i];
+  const c={root:el('div',{class:'cand'}),img:el('img'),sc:el('div',{class:'sc'})};
+  c.root.append(el('div',{class:'ev',text:`candidate ${i+1}`}),c.img,c.sc);
+  s.slots[i]=c;
+  const order=Object.keys(s.slots).map(Number).sort();
+  s.cands.replaceChildren(...order.map(k=>s.slots[k].root));
+  return c;
+}
+const file=f=>`/runs/${runId}/${f}`;
+function handle(e){
+  const t=e.step;
+  switch(e.type){
+    case'run_start':$('#status').textContent=`running · ${e.steps} steps`;$('#status').className='live';break;
+    case'step_start':{const s=ensureStep(t);s.img.src=file(e.input);
+      const f=el('figure',{id:'f'+t});$('#strip').append(f);
+      f.append(el('img',{src:file(e.input)}),el('div',{text:t===1?'original':`after step ${t-1}`}));break}
+    case'status':ensureStep(t).status.textContent=e.text;$('#status').textContent=`step ${t} · ${e.text}`;$('#status').className='live';break;
+    case'reading':{const s=ensureStep(t);s.sub.textContent=`scale: ${e.scale}`;
+      s.info.append(el('div',{class:'sec'},el('h3',{text:'Reading (top 3)'}),bars(e.readings,true)));break}
+    case'hypothesis':{const s=ensureStep(t);const o=e.operation;
+      s.title.firstChild.textContent=`Step ${t} · undo ${o.name}`;
+      s.info.append(el('div',{class:'sec'},el('h3',{text:'Formation hypothesis'}),
+        el('div',{text:e.formation.process}),el('div',{class:'ev',text:e.formation.reasoning}),
+        e.formation.evidence.map(x=>el('div',{class:'ev',text:'· '+x}))));
+      s.info.append(el('div',{class:'sec'},el('h3',{text:`Operation: ${o.name}`+(e.banned?` (${e.banned} excluded: repeated)`:'')}),
+        el('div',{class:'ev',text:o.reasoning}),
+        o.preserve.map(x=>el('span',{class:'chip keep',text:'keep: '+x})),
+        o.alter.map(x=>el('span',{class:'chip alt',text:'undo: '+x}))));break}
+    case'prompt':ensureStep(t).info.append(el('details',{class:'sec'},el('summary',{text:'Prompt sent to image model'}),el('pre',{text:e.text})));break;
+    case'candidate':{const c=slot(ensureStep(t),e.index);c.img.src=file(e.file);c.sc.textContent='scoring pending…';break}
+    case'scores':{const c=slot(ensureStep(t),e.index);c.sc.replaceChildren(
+      el('div',{},el('b',{text:'legibility '}),e.legibility.toFixed(2)),el('div',{class:'r',text:e.legibility_reason}),
+      el('div',{},el('b',{text:'inheritance '}),e.inheritance.toFixed(2),` (vs original ${e.anchor.toFixed(2)})`),el('div',{class:'r',text:e.inheritance_reason}),
+      el('div',{},el('b',{text:'displacement '}),e.displacement.toFixed(2),`  composite ${e.composite.toFixed(2)}`),
+      bars(e.cand_readings,false),
+      e.gate_fails.length?el('div',{class:'fail',text:'✗ '+e.gate_fails.join('; ')}):el('div',{class:'ev',text:'✓ passed all gates'}));
+      c.fails=e.gate_fails.length;break}
+    case'selected':{const s=ensureStep(t);Object.entries(s.slots).forEach(([k,c])=>c.root.classList.add(+k===e.index?'sel':'rej'));
+      s.why.replaceChildren(el('b',{text:`Selected candidate ${e.index+1}. `}),e.reason);
+      s.status.textContent='';
+      const f=$('#f'+t);if(f){f.querySelector('div').textContent=`step ${t} → candidate ${e.index+1}`}
+      const nf=el('figure',{},el('img',{src:file(e.file)}),el('div',{text:`selected, step ${t}`}));
+      $('#strip').append(nf);break}
+    case'step_end':ensureStep(t).status.remove();break;
+    case'error':ensureStep(t).root.append(el('div',{class:'err',text:e.text}));break;
+    case'run_end':$('#status').textContent='finished';$('#status').className='';break;
+  }
+}
+function open_(id){
+  if(es)es.close();
+  runId=id;steps={};$('#timeline').replaceChildren();$('#strip').replaceChildren();
+  $('#status').textContent='loading…';
+  es=new EventSource('/stream/'+id);
+  es.onmessage=m=>{try{handle(JSON.parse(m.data))}catch(err){console.error(err)}};
+  es.onerror=()=>{es.close()};
+}
+async function loadLists(select){
+  const runs=await (await fetch('/api/runs')).json();
+  const sel=$('#runs');sel.replaceChildren(el('option',{value:'',text:'past runs…'}),...runs.map(r=>el('option',{value:r,text:r})));
+  if(select)sel.value=select;
+  const assets=await (await fetch('/api/assets')).json();
+  $('#asset').replaceChildren(...assets.map(a=>el('option',{value:a,text:a})));
+}
+$('#runs').onchange=e=>e.target.value&&open_(e.target.value);
+$('#start').onclick=async()=>{
+  const r=await fetch('/api/start',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({image:$('#asset').value,steps:+$('#steps').value})});
+  const j=await r.json();
+  if(j.error){alert(j.error);return}
+  await loadLists(j.run_id);open_(j.run_id);
+};
+loadLists().then(()=>{const first=$('#runs').options[1];if(first){$('#runs').value=first.value;open_(first.value)}});
+</script>
+</body>
+</html>

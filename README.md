@@ -44,4 +44,19 @@ Pinned config + lexicon are committed; each run records the commit hash, model I
 
 One commit per logical change. The message says what changed and why (the research reasoning), so `git log` doubles as the experiment notebook. Threshold, lexicon and prompt changes get their own commits.
 
-_Status: scaffold. Reader, editor, scoring and UI are added in later commits._
+## Blind evaluation (same starting point for every judgement)
+
+Every Claude call is a fresh, stateless call with a fixed system prompt (`reader.SYSTEM`, `scoring.JUDGE_SYSTEM`, `scoring.ALIGN_SYSTEM`).
+A judge sees only its own inputs: two images and the operation definition. It never sees the generation prompt, earlier steps,
+other candidates, the candidate index, or the pipeline's reasoning. The only thing carried between steps is the chosen image
+(and a ban on an operation used `max_same_op_in_row` times consecutively).
+
+## Scores and gates
+
+- **legibility**: was the operation visibly undone (blind judge, A vs B).
+- **inheritance**: does structure from the input survive; also checked against the original image_0 (`anchor`).
+- **displacement**: Jensen-Shannon divergence between the input's reading distribution and the candidate's blind re-read,
+  after labels are grouped into shared categories. Reader noise inflates this; see the no-op control (planned).
+- Candidates failing a gate in `config.yaml` are rejected; if none pass, the best composite continues and is flagged.
+
+_Status: reader, editor, scoring, loop and live UI work. Still to do: no-op control chain, 10-step run, threshold calibration._
