@@ -1,7 +1,6 @@
 # Operation lexicon. Each entry is a FORWARD material process. The loop runs it in
 # REVERSE: given an image showing the result of the process, generate how the sample
-# looked before it. `undo_prompt` describes that reversal; `visible_signature` is what
-# the judge looks for to decide whether the undo actually happened.
+# looked before it. `undo_prompt` describes that reversal.
 # Groups and wording are a first draft and expected to be refined after tests.
 
 groups:
@@ -9,74 +8,56 @@ groups:
     DEPOSIT:
       family: aggregation
       undo_prompt: "the deposited layer has not yet accumulated; the underlying host surface is exposed"
-      visible_signature: "less surface coating, more of the underlying material visible"
     PRECIPITATE:
       family: phase change
       undo_prompt: "the mineral has not yet precipitated out; the surface is as it was before crystals formed"
-      visible_signature: "fewer or no crystals, smoother or wetter-looking surface"
     CRYSTALLIZE:
       family: phase change
       undo_prompt: "the material has not crystallized; it is still glassy, amorphous or molten"
-      visible_signature: "crystal facets replaced by continuous glassy or fluid surface"
     SINTER:
       family: aggregation
       undo_prompt: "the particles are still loose and unfused"
-      visible_signature: "separate grains instead of fused neck-connected mass"
     CEMENT:
       family: aggregation
       undo_prompt: "the grains are not yet bound together by cement"
-      visible_signature: "loose grains, gaps where binder was"
     INFILTRATE:
       family: migration
       undo_prompt: "the infiltrating phase has not yet entered; pores and channels are empty or original"
-      visible_signature: "original pore structure without the invading material"
   unmaking:            # processes that remove or break matter -> undo = restore it
     DISSOLVE:
       family: void formation
       undo_prompt: "the material has not yet dissolved; the removed mass is still present"
-      visible_signature: "filled-in voids and intact edges where material was lost"
     ERODE:
       family: boundary failure
       undo_prompt: "the surface has not been eroded; original edges and volume are intact"
-      visible_signature: "sharper edges, fuller volume"
     FRACTURE:
       family: boundary failure
       undo_prompt: "the body is not yet cracked; the surface is continuous"
-      visible_signature: "cracks closed, continuous surface"
     DELAMINATE:
       family: boundary failure
       undo_prompt: "the layers are still bonded; nothing has peeled away"
-      visible_signature: "layers attached, flat continuous surface"
     BURN_OUT:
       family: void formation
       undo_prompt: "the combustible phase has not yet burned out; voids are still filled"
-      visible_signature: "voids filled with the original organic or fugitive material"
     LEACH:
       family: void formation
       undo_prompt: "the soluble component has not been leached away"
-      visible_signature: "denser, more intact material with original color"
   reorganization:      # processes that rearrange matter -> undo = restore prior arrangement
     DEVITRIFY:
       family: phase change
       undo_prompt: "the glass has not devitrified; it is still clear and continuous"
-      visible_signature: "clear glassy surface instead of cloudy crystalline texture"
     PHASE_SEPARATE:
       family: migration
       undo_prompt: "the phases have not yet separated; the material is a uniform mix"
-      visible_signature: "uniform blended texture instead of distinct domains"
     COARSEN:
       family: aggregation
       undo_prompt: "the texture has not coarsened; features are smaller and finer"
-      visible_signature: "finer, smaller-scale texture"
     FOLD:
       family: deformation
       undo_prompt: "the surface has not been folded; it is flat or in its earlier shape"
-      visible_signature: "folds relaxed into flatter geometry"
     CREEP:
       family: deformation
       undo_prompt: "the material has not slowly deformed; it holds its original shape"
-      visible_signature: "original geometry restored, less sag or flow"
     MIGRATE:
       family: migration
       undo_prompt: "the migrating phase is still at its origin, not yet moved through the body"
-      visible_signature: "material concentrated at source, absent where it travelled"

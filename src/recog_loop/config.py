@@ -30,7 +30,7 @@ def load_config() -> dict:
 
 
 def load_lexicon() -> dict:
-    """Return {OP_NAME: {group, family, undo_prompt, visible_signature}}."""
+    """Return {OP_NAME: {group, family, undo_prompt}}."""
     raw = yaml.safe_load((ROOT / "lexicon.yaml").read_text())
     ops = {}
     for group, entries in raw["groups"].items():

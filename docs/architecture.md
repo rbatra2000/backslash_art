@@ -12,7 +12,7 @@ flowchart LR
     B --> C[prompt]
     C --> D[Klein]
     D --> E[result]
-    E --> F[reflect]
+    E --> F[re-read]
     F --> A
 ```
 
@@ -23,22 +23,16 @@ sequenceDiagram
     participant C as Code
     participant P as Planner (Claude)
     participant K as Klein
-    participant J as Judge (Claude)
     participant R as Re-reader (Claude)
     C->>P: image + lexicon
     P-->>C: 3 identities, process, operation, keep/undo
     C->>K: image + prompt from template
     K-->>C: result image
-    par blind reflection
-        C->>J: before + after
-        J-->>C: undone yes/no, changed, kept, lost
-    and
-        C->>R: result only
-        R-->>C: 3 identities
-    end
+    C->>R: result only
+    R-->>C: 3 identities
 ```
 
-4 model roles, 0 persistent agents: every call is stateless.
+3 model roles, 0 persistent agents: every call is stateless.
 
 ## Picking the operation
 
@@ -53,9 +47,6 @@ flowchart LR
 flowchart TB
     subgraph Planner
         p1[image] ~~~ p2[lexicon] ~~~ p3[operations already undone]
-    end
-    subgraph Judge
-        j1[before + after] ~~~ j2[operation definition]
     end
     subgraph Re-reader
         r1[result image only]

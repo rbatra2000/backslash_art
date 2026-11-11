@@ -44,18 +44,14 @@ Pinned config + lexicon are committed; each run records the commit hash, model I
 
 One commit per logical change. The message says what changed and why (the research reasoning), so `git log` doubles as the experiment notebook. Threshold, lexicon and prompt changes get their own commits.
 
-## Blind reflection (same starting point for every judgement)
+## What each call sees
 
-Every Claude call is a fresh, stateless call with a fixed system prompt (`reader.SYSTEM`, `scoring.JUDGE_SYSTEM`).
-The judge sees only two images and the operation definition: never the generation prompt, earlier steps, or the pipeline's
-reasoning. The planner (the reader that chooses the next operation) anchors on its top-ranked reading of what the material is and picks the process most likely to have happened to it; repeats are allowed. It is told which operations were already undone so it doesn't name products that are gone; the "before" reading shown in the UI is always a blind read.
+Every Claude call is a fresh, stateless call with a fixed system prompt. The **planner** sees the current image, the lexicon and the
+operations already undone; it anchors on its top-ranked reading and picks the process most likely to have happened to that material.
+After Klein generates the image, a **blind re-reader** sees only the result, so the "after" reading has no history in it and becomes
+the next step's "before" reading.
 
-After each image the judge reports, in words and without numeric scores:
-- **undone**: yes / no, with a few words of reasoning (transformation legibility)
-- **changed**, **kept**, **lost**: short phrases for what visibly differs, what structure survives, what is gone (source inheritance)
-- the image is re-read blind, so you can compare how it reads before and after (semantic displacement, as ranked readings)
+The only number is an objective pixel difference. It raises an "image barely changed" flag (`gates.pixel_diff_min`) and nothing else:
+no retry, no selection. Model-stated probabilities are kept in `record.json` but not shown; they are not calibrated.
 
-The only number is an objective pixel difference, used solely to flag "image barely changed" (`gates.pixel_diff_min`).
-Model-stated probabilities are kept in `record.json` but not shown: they are not calibrated.
-
-_Status: reader, editor, reflection, loop and live UI work. Still to do: 10-step run and no-op control._
+_Status: planner, editor, re-reader, loop and live UI work._

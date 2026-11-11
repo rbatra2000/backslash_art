@@ -5,7 +5,7 @@ run:
   base_seed: 1000          # step t uses seed base_seed + t*100
 
 models:
-  reader: claude-sonnet-5-5          # vision: readings, hypothesis, operation, judging
+  reader: claude-sonnet-5-5          # vision: readings, hypothesis, operation
   image_editor: flux-3-image-klein   # BFL endpoint /v1/flux-3-image-klein
 
 image:

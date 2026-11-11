@@ -1,17 +1,15 @@
 """The recursive backwards loop. Writes runs/<id>/{run.json, events.jsonl, step_XX/...}.
 
-One image per step, no retry, no selection: the chain is the record. After each image a blind judge
-reflects on it qualitatively (undone? what changed, kept, lost) and a blind reader re-reads it.
+One image per step, no retry, no selection: the chain is the record. After each image a blind reader
+re-reads it, so you can see how its identity shifts.
 """
 import json
 import subprocess
 import time
-from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from PIL import Image, ImageChops, ImageOps, ImageStat
 
-from . import scoring
 from .config import ROOT
 from .editor import KleinEditor, build_reverse_prompt
 from .reader import read_image
@@ -108,24 +106,16 @@ def run(image: Path, steps: int, cfg: dict, lex: dict, keys: dict, run_id: str |
         meta = editor.edit(inp, prompt, seed, out)
         ev.emit("result", t, file=str(out.relative_to(run_dir)))
 
-        # 4. REFLECT (blind judge + blind re-read, in parallel)
-        ev.emit("status", t, text="reflecting (blind judge + re-read)")
-        with ThreadPoolExecutor(max_workers=2) as pool:
-            fj = pool.submit(scoring.judge, inp, out, op, lex[op], ak, model)
-            fr = pool.submit(read_image, out, lex, cfg, ak)
-            judged, after = fj.result(), fr.result()
+        # 4. RE-READ the result blind (no history); this is the "after" reading and the next step's "before"
+        ev.emit("status", t, text="re-reading result")
+        after = read_image(out, lex, cfg, ak)
         pd = _pixel_diff(inp, out)
-        flags = []
-        if judged["undone"]["verdict"] == "no":
-            flags.append("no visible undo")
-        if pd < g["pixel_diff_min"]:
-            flags.append("image barely changed")
-        ev.emit("reflection", t, undone=judged["undone"], changes=judged["changes"], kept=judged["kept"],
-                lost=judged["lost"], after_readings=after["readings"], flags=flags)
+        flags = ["image barely changed"] if pd < g["pixel_diff_min"] else []
+        ev.emit("after", t, after_readings=after["readings"], flags=flags)
 
         (sd / "record.json").write_text(json.dumps({
             "step": t, "operation": op, "plan": plan, "before_reading": before,
-            "prompt": prompt, "seed": seed, "editor_meta": meta, "reflection": judged,
+            "prompt": prompt, "seed": seed, "editor_meta": meta,
             "after_reading": after, "pixel_diff": pd, "flags": flags}, indent=2))
         prev_blind = after
         current = out
