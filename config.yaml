@@ -19,6 +19,7 @@ gates:
   legibility_floor: 0.4      # was the undo visibly performed
   inheritance_floor: 0.5     # does structure from the input survive
   anchor_floor: 0.3          # inheritance vs the original image_0
+  displacement_saturation: 0.5  # displacement >= this counts as full marks in the composite
   displacement_min: 0.05     # reading distribution must move at least this much
   no_repeat_window: 2        # don't match the reading distribution of the last N steps
   max_same_op_in_row: 2

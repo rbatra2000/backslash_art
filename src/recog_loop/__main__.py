@@ -12,6 +12,10 @@ def main():
     s = sub.add_parser("step", help="one step: read, build reverse prompt, generate candidates")
     s.add_argument("--image", required=True)
     s.add_argument("--out", default=None, help="output dir (default runs/<timestamp>/step_01)")
+    rn = sub.add_parser("run", help="run the full backwards loop")
+    rn.add_argument("--image", required=True)
+    rn.add_argument("--steps", type=int, default=None, help="default from config.yaml")
+    rn.add_argument("--run-id", default=None)
     args = p.parse_args()
 
     if args.cmd == "read":
@@ -19,6 +23,13 @@ def main():
         keys = load_env(required=["ANTHROPIC_API_KEY"])
         out = read_image(args.image, load_lexicon(), load_config(), keys["ANTHROPIC_API_KEY"])
         print(json.dumps(out, indent=2))
+
+    if args.cmd == "run":
+        from pathlib import Path
+        from .loop import run
+        cfg = load_config()
+        d = run(Path(args.image), args.steps or cfg["run"]["steps"], cfg, load_lexicon(), load_env(), args.run_id)
+        print(f"done: {d}")
 
     if args.cmd == "step":
         import time
