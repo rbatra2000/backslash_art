@@ -6,7 +6,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
-from PIL import Image, ImageOps
+from PIL import Image, ImageChops, ImageOps, ImageStat
 
 from . import scoring
 from .config import ROOT
@@ -36,6 +36,25 @@ def _normalise(src: Path, dst: Path, max_edge: int):
     img = ImageOps.exif_transpose(Image.open(src)).convert("RGB")
     img.thumbnail((max_edge, max_edge))
     img.save(dst, "PNG")
+
+
+def _pixel_diff(a: Path, b: Path) -> float:
+    """Mean absolute grayscale difference, 0-1. Objective check that the image visibly changed."""
+    size = (256, 341)
+    A = Image.open(a).convert("L").resize(size)
+    B = Image.open(b).convert("L").resize(size)
+    return round(ImageStat.Stat(ImageChops.difference(A, B)).mean[0] / 255, 4)
+
+
+def _history_context(done: list[dict]) -> str | None:
+    """Planner-only context: what has already been undone, so each step reaches further back."""
+    if not done:
+        return None
+    lines = [f"{i}. {d['op']}: {d['process']}" for i, d in enumerate(done, 1)]
+    return ("Earlier steps already undone, in order:\n" + "\n".join(lines) +
+            "\nThe image you see is the sample AFTER those were undone. Choose a process that produced something "
+            "STILL VISIBLE in this image, one that acted earlier in the sample's history than those listed. "
+            "Do not name a product that is already gone.")
 
 
 def _banned_op(ops_history: list[str], limit: int) -> str | None:
@@ -71,8 +90,10 @@ def run(image: Path, steps: int, cfg: dict, lex: dict, keys: dict, run_id: str |
     current.parent.mkdir(exist_ok=True)
     _normalise(image, current, cfg["image"]["max_edge"])
     anchor = current
-    history_readings: list[dict] = []
+    history_readings: list[dict] = []   # blind readings of each step's input
     ops_history: list[str] = []
+    done_steps: list[dict] = []         # planner history: {op, process}
+    prev_blind: dict | None = None      # blind re-read of the previous step's output = this step's input reading
 
     for t in range(1, steps + 1):
         sd = run_dir / f"step_{t:02d}"
@@ -86,11 +107,14 @@ def run(image: Path, steps: int, cfg: dict, lex: dict, keys: dict, run_id: str |
         banned = _banned_op(ops_history, g["max_same_op_in_row"])
         avail = {k: v for k, v in lex.items() if k != banned}
         ev.emit("status", t, text="reading image" + (f" (excluding {banned}, used {g['max_same_op_in_row']}x in a row)" if banned else ""))
-        reading = read_image(inp, avail, cfg, ak)
+        reading = read_image(inp, avail, cfg, ak, prior_context=_history_context(done_steps))
         op = reading["operation"]["name"]
         ops_history.append(op)
-        history_readings.append(reading)
-        ev.emit("reading", t, readings=reading["readings"], scale=reading["scale_estimate"])
+        # displacement baseline must be a BLIND reading: step 1's planner has no context so it is blind;
+        # later steps reuse the blind re-read already made of this exact image.
+        blind_in = reading if prev_blind is None else prev_blind
+        history_readings.append(blind_in)
+        ev.emit("reading", t, readings=blind_in["readings"], scale=blind_in["scale_estimate"])
         ev.emit("hypothesis", t, formation=reading["formation"], operation=reading["operation"], banned=banned)
 
         # 2. PROMPT
@@ -138,18 +162,20 @@ def run(image: Path, steps: int, cfg: dict, lex: dict, keys: dict, run_id: str |
             cands[k].update(
                 legibility=j["legibility"]["score"], legibility_reason=j["legibility"]["reasoning"],
                 inheritance=j["inheritance"]["score"], inheritance_reason=j["inheritance"]["reasoning"],
+                change=j["change"]["score"], change_reason=j["change"]["reasoning"],
+                pixel_diff=_pixel_diff(inp, sd / cands[k]["file"]),
                 anchor=a["inheritance"]["score"], anchor_reason=a["inheritance"]["reasoning"],
                 cand_reading=r)
 
         # displacement: align labels from this step's input, each candidate, and recent history
         recent = history_readings[-(g["no_repeat_window"] + 1):-1]
-        sets = {"input": [x["label"] for x in reading["readings"]]}
+        sets = {"input": [x["label"] for x in blind_in["readings"]]}
         for c in ok:
             sets[f"cand{c['index']}"] = [x["label"] for x in c["cand_reading"]["readings"]]
         for i, h in enumerate(recent):
             sets[f"hist{i}"] = [x["label"] for x in h["readings"]]
         cat = scoring.align_categories(sets, ak, model)
-        p_in = scoring.to_distribution(reading, cat)
+        p_in = scoring.to_distribution(blind_in, cat)
         p_hist = [scoring.to_distribution(h, cat) for h in recent]
         for c in ok:
             p = scoring.to_distribution(c["cand_reading"], cat)
@@ -161,27 +187,33 @@ def run(image: Path, steps: int, cfg: dict, lex: dict, keys: dict, run_id: str |
             if c["inheritance"] < g["inheritance_floor"]: fails.append("inheritance below floor")
             if c["anchor"] < g["anchor_floor"]: fails.append("lost the original image (anchor)")
             if c["displacement"] < g["displacement_min"]: fails.append("reading barely moved")
+            if c["pixel_diff"] < g["pixel_diff_min"]: fails.append("image barely changed")
             if any(scoring.js_divergence(p, ph) < g["displacement_min"] for ph in p_hist):
                 fails.append("reading cycled back to a recent step")
             c["gate_fails"] = fails
             c["composite"] = round(_composite(c, w, sat), 4)
             ev.emit("scores", t, index=c["index"], **{k: c[k] for k in (
                 "legibility", "legibility_reason", "inheritance", "inheritance_reason", "anchor",
-                "anchor_reason", "displacement", "entropy_change", "composite", "gate_fails", "distribution")},
+                "anchor_reason", "change", "change_reason", "pixel_diff", "displacement", "entropy_change", "composite", "gate_fails", "distribution")},
                 cand_readings=c["cand_reading"]["readings"])
 
         # 5. SELECT
         passing = [c for c in ok if not c["gate_fails"]]
         pool_ = passing or ok
         best = max(pool_, key=lambda c: c["composite"])
-        why = ("highest composite among candidates passing all gates" if passing
-               else "NO candidate passed all gates; took highest composite anyway (flagged)")
+        if n_cand == 1:
+            why = "single image, no retry and no selection" + ("" if passing else "; flagged: " + "; ".join(best["gate_fails"]))
+        else:
+            why = ("highest composite among candidates passing all gates" if passing
+                   else "NO candidate passed all gates; took highest composite anyway (flagged)")
         shutil.copy(sd / best["file"], sd / "selected.png")
         current = sd / "selected.png"
+        prev_blind = best["cand_reading"]
+        done_steps.append({"op": op, "process": reading["formation"]["process"]})
         ev.emit("selected", t, index=best["index"], file=str(current.relative_to(run_dir)), reason=why,
                 gates_passed=bool(passing))
         (sd / "record.json").write_text(json.dumps({
-            "step": t, "reading": reading, "banned_op": banned, "operation": op, "prompt": prompt,
+            "step": t, "reading": reading, "blind_reading": blind_in, "banned_op": banned, "operation": op, "prompt": prompt,
             "candidates": cands, "selected": best["index"], "selection_reason": why,
             "gates_passed": bool(passing)}, indent=2))
         ev.emit("step_end", t)

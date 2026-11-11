@@ -2,7 +2,7 @@
 
 run:
   steps: 10
-  candidates: 3            # candidates per step, one fixed intensity
+  candidates: 1            # images per step. 1 = purest record (no retry, no selection); 3 = collaborator protocol
   base_seed: 1000          # candidate k at step t uses base_seed + t*100 + k
 
 models:
@@ -21,6 +21,7 @@ gates:
   anchor_floor: 0.3          # inheritance vs the original image_0
   displacement_saturation: 0.5  # displacement >= this counts as full marks in the composite
   displacement_min: 0.05     # reading distribution must move at least this much
+  pixel_diff_min: 0.05       # mean pixel change vs input (0-1); below this the step barely changed
   no_repeat_window: 2        # don't match the reading distribution of the last N steps
   max_same_op_in_row: 2
 

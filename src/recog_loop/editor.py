@@ -13,15 +13,15 @@ TERMINAL_FAIL = {"Error", "Failed", "Request Moderated", "Content Moderated", "T
 
 
 def build_reverse_prompt(op_name: str, op_spec: dict, reading: dict) -> str:
-    """Assemble the image prompt from the structured record. Backwards semantics: show the sample BEFORE the op."""
+    """Assemble the image prompt from the structured record. Backwards semantics: show the sample BEFORE the op.
+    Leads with a concrete visible target and demands a clear change (Klein otherwise makes minimal edits)."""
     alter = "; ".join(reading["operation"]["alter"])
     preserve = "; ".join(reading["operation"]["preserve"])
     return (
-        f"Show this same sample as it looked before the process of {op_name.lower().replace('_', ' ')} acted on it: "
-        f"{op_spec['undo_prompt']}. "
-        f"Remove or reverse: {alter}. "
-        f"Keep exactly unchanged: {preserve}; the camera angle, framing, macro scale, lighting and shallow depth of field. "
-        f"Photographic macro image of the same physical object, not a drawing."
+        f"Edit this photo to show the same object before {op_name.lower().replace('_', ' ')} happened to it. "
+        f"Completely remove: {alter}. {op_spec['undo_prompt'].capitalize()}. "
+        f"Show the clean material that was underneath, not a faded or blurred version; the change must be clearly visible. "
+        f"Keep the object's shape and layout: {preserve}. Same framing and camera angle. Photographic macro, not a drawing."
     )
 
 

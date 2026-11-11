@@ -19,6 +19,7 @@ You know nothing else. Judge only what you can see. Score each on 0.0-1.0:
 - legibility: was the named process visibly undone in B? 0 = no visible undo (or the opposite happened), 1 = clearly undone.
 - inheritance: does something structurally specific from A survive in B (form, boundaries, geometry, distinctive features)?
   0 = unrelated image, 1 = same object and structure. Judge structure, not colour.
+- change: how visibly different is B from A overall? 0 = identical or nearly so, 0.3 = subtle, 0.6 = clearly different, 1 = dramatically different.
 Give one short sentence of reasoning for each. Be calibrated; use the whole range."""
 
 ALIGN_SYSTEM = """You group free-text image-reading labels into shared semantic categories so that probability
@@ -60,12 +61,12 @@ def _call_tool(api_key, model, system, tool, content, validate, retries=3):
 _SCORE = {"type": "object", "required": ["score", "reasoning"],
           "properties": {"score": {"type": "number"}, "reasoning": {"type": "string"}}}
 JUDGE_TOOL = {"name": "judge", "description": "Report scores.", "input_schema": {
-    "type": "object", "required": ["legibility", "inheritance"],
-    "properties": {"legibility": _SCORE, "inheritance": _SCORE}}}
+    "type": "object", "required": ["legibility", "inheritance", "change"],
+    "properties": {"legibility": _SCORE, "inheritance": _SCORE, "change": _SCORE}}}
 
 
 def _validate_judge(o):
-    for k in ("legibility", "inheritance"):
+    for k in ("legibility", "inheritance", "change"):
         s = o[k]["score"]
         if not (isinstance(s, (int, float)) and 0 <= s <= 1) or not isinstance(o[k]["reasoning"], str):
             raise ValueError(f"{k} needs score in [0,1] and string reasoning")

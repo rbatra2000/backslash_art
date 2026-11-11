@@ -108,7 +108,7 @@ def read_image(path, lexicon: dict, cfg: dict, api_key: str, prior_context: str 
     client = anthropic.Anthropic(api_key=api_key)
     text = _lexicon_text(lexicon)
     if prior_context:
-        text += f"\n\nContext from earlier steps:\n{prior_context}"
+        text += f"\n\n{prior_context}"
     last_err = None
     for attempt in range(retries):
         note = f"\n\nYour previous report was invalid: {last_err}. Fix it." if last_err else ""

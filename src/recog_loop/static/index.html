@@ -32,7 +32,7 @@ main{max-width:980px;margin:0 auto;padding:16px}
 .top img,.ph{width:100%;border-radius:6px;display:block;aspect-ratio:3/4;object-fit:cover;background:var(--line)}
 .arrow{color:var(--mute);text-align:center}
 .cap{font-size:11px;color:var(--mute);margin-top:2px;text-align:center}
-.reads div{margin:2px 0}
+.reads div{margin:2px 0}.nums{margin-top:8px!important;font-size:12px;color:var(--mute)}.reads .ok{color:var(--ok);font-size:12px}.reads .no{color:var(--bad);font-size:12px}
 .reads .bar{display:inline-block;height:6px;background:var(--accent);border-radius:3px;margin-right:6px;vertical-align:middle}
 .cands{display:flex;gap:10px;margin-top:12px}
 .cand{width:100px;border:2px solid transparent;border-radius:8px;padding:3px;font-size:11px;color:var(--mute);text-align:center}
@@ -67,7 +67,7 @@ pre{white-space:pre-wrap;margin:4px 0;font:11px/1.4 ui-monospace,monospace}
 const $=s=>document.querySelector(s);
 const el=(tag,attrs={},...kids)=>{const e=document.createElement(tag);for(const[k,v]of Object.entries(attrs)){if(k==='class')e.className=v;else if(k==='text')e.textContent=v;else e.setAttribute(k,v)}for(const c of kids.flat())if(c!=null)e.append(c);return e};
 const pct=x=>Math.round(x*100)+'%', f2=x=>x.toFixed(2);
-let es=null,runId=null,steps={};
+let es=null,runId=null,steps={},single=false;
 const file=f=>`/runs/${runId}/${f}`;
 
 function stripAdd(src,label){
@@ -107,7 +107,7 @@ function why(s,html){s.why.append(html)}
 function handle(e){
   const t=e.step, s=t?ensure(t):null;
   switch(e.type){
-    case'run_start':$('#status').textContent=`running · ${e.steps} steps`;$('#status').className='live';break;
+    case'run_start':single=e.candidates===1;$('#status').textContent=`running · ${e.steps} steps`;$('#status').className='live';break;
     case'step_start':s.inImg.src=file(e.input);if(t===1)stripAdd(file(e.input),'original');break;
     case'status':s.st.textContent=e.text;$('#status').textContent=`step ${t} · ${e.text}`;$('#status').className='live';break;
     case'reading':
@@ -120,14 +120,19 @@ function handle(e){
       why(s,el('p',{},el('b',{text:'Why '+o.name+': '}),o.reasoning+(e.banned?` (${e.banned} excluded: used too often)`:'')));
       why(s,el('p',{},o.preserve.map(x=>el('span',{class:'chip keep',text:x})),o.alter.map(x=>el('span',{class:'chip alt',text:x}))));break}
     case'prompt':why(s,el('p',{},el('b',{text:'Prompt'}),el('pre',{text:e.text})));break;
-    case'candidate':{const c=slot(s,e.index);c.img.src=file(e.file);break}
-    case'scores':{const c=slot(s,e.index);
+    case'candidate':{if(single)break;const c=slot(s,e.index);c.img.src=file(e.file);break}
+    case'scores':{
+      if(single){
+        s.reads.append(el('div',{class:'nums'},`undone ${f2(e.legibility)} · kept ${f2(e.inheritance)} · changed ${f2(e.change)} (pixels ${f2(e.pixel_diff)}) · reading shift ${f2(e.displacement)}`),
+          e.gate_fails.length?el('div',{class:'no',text:'⚑ '+e.gate_fails.join('; ')}):el('div',{class:'ok',text:'✓ no flags'}));
+        why(s,el('p',{},el('b',{text:'Reflection: '}),`${e.legibility_reason} ${e.inheritance_reason} ${e.change_reason}`));break}
+      const c=slot(s,e.index);
       c.meta.replaceChildren(el('div',{text:`L ${f2(e.legibility)} · I ${f2(e.inheritance)} · D ${f2(e.displacement)}`}),
         e.gate_fails.length?el('div',{class:'no',text:'✗ '+e.gate_fails[0]}):el('div',{class:'ok',text:'✓'}));
       why(s,el('p',{},el('b',{text:`Candidate ${e.index+1}: `}),`${e.legibility_reason} ${e.inheritance_reason}`));break}
     case'selected':
       Object.entries(s.slots).forEach(([k,c])=>c.root.classList.toggle('sel',+k===e.index));
-      s.outBox.replaceChildren(el('img',{src:file(e.file)}),el('div',{class:'cap',text:`candidate ${e.index+1}`+(e.gates_passed?'':' (no candidate passed gates)')}));
+      s.outBox.replaceChildren(el('img',{src:file(e.file)}),el('div',{class:'cap',text:`result`+''}));
       s.st.textContent='';
       stripAdd(file(e.file),`step ${t}`);break;
     case'step_end':s.st.textContent='';break;
