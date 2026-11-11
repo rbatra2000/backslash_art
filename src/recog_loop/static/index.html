@@ -111,7 +111,7 @@ function handle(e){
       s.title.textContent=`step ${String(t).padStart(2,'0')} -- undo ${o.name}`;
       why(s,el('p',{},el('b',{text:'Formed by: '}),e.formation.process));
       why(s,el('p',{text:e.formation.reasoning}));
-      why(s,el('p',{},el('b',{text:'Why '+o.name+': '}),o.reasoning+(e.banned?` (${e.banned} excluded: used too often)`:'')));
+      why(s,el('p',{},el('b',{text:'Why '+o.name+': '}),o.reasoning));
       why(s,el('p',{},o.preserve.map(x=>el('span',{class:'chip keep',text:x})),o.alter.map(x=>el('span',{class:'chip alt',text:x}))));break}
     case'prompt':why(s,el('p',{},el('b',{text:'Prompt'}),el('pre',{text:e.text})));break;
     case'result':

@@ -55,15 +55,9 @@ def _history_context(done: list[dict]) -> str | None:
         return None
     lines = [f"{i}. {d['op']}: {d['process']}" for i, d in enumerate(done, 1)]
     return ("Earlier steps already undone, in order:\n" + "\n".join(lines) +
-            "\nThe image you see is the sample AFTER those were undone. Choose a process that produced something "
-            "STILL VISIBLE in this image, one that acted earlier in the sample's history than those listed. "
-            "Do not name a product that is already gone.")
-
-
-def _banned_op(ops_history: list[str], limit: int) -> str | None:
-    if len(ops_history) >= limit and len(set(ops_history[-limit:])) == 1:
-        return ops_history[-1]
-    return None
+            "\nThe image you see is the sample AFTER those were undone. Judge the material as it looks now and choose "
+            "the process most likely to have happened to it. The same operation may repeat if it is still the most "
+            "likely and its product is still visible; do not name a product that is already gone.")
 
 
 def run(image: Path, steps: int, cfg: dict, lex: dict, keys: dict, run_id: str | None = None) -> Path:
@@ -84,7 +78,6 @@ def run(image: Path, steps: int, cfg: dict, lex: dict, keys: dict, run_id: str |
     current = run_dir / "step_01" / "input.png"
     current.parent.mkdir(exist_ok=True)
     _normalise(image, current, cfg["image"]["max_edge"])
-    ops_history: list[str] = []
     done_steps: list[dict] = []         # planner history: {op, process}
     prev_blind: dict | None = None      # blind re-read of the previous output = this step's "before" reading
 
@@ -97,17 +90,14 @@ def run(image: Path, steps: int, cfg: dict, lex: dict, keys: dict, run_id: str |
         ev.emit("step_start", t, input=str(inp.relative_to(run_dir)))
 
         # 1. PLAN: read the image, hypothesize formation, choose the operation to undo
-        banned = _banned_op(ops_history, g["max_same_op_in_row"])
-        avail = {k: v for k, v in lex.items() if k != banned}
-        ev.emit("status", t, text="reading image" + (f" (excluding {banned}, used {g['max_same_op_in_row']}x in a row)" if banned else ""))
-        plan = read_image(inp, avail, cfg, ak, prior_context=_history_context(done_steps))
+        ev.emit("status", t, text="reading image")
+        plan = read_image(inp, lex, cfg, ak, prior_context=_history_context(done_steps))
         op = plan["operation"]["name"]
-        ops_history.append(op)
         # The "before" reading shown must be blind. Step 1's planner has no context so it is blind;
         # later steps reuse the blind re-read already made of this exact image.
         before = plan if prev_blind is None else prev_blind
         ev.emit("reading", t, readings=before["readings"], scale=before["scale_estimate"])
-        ev.emit("hypothesis", t, formation=plan["formation"], operation=plan["operation"], banned=banned)
+        ev.emit("hypothesis", t, formation=plan["formation"], operation=plan["operation"])
 
         # 2. PROMPT, 3. GENERATE one image
         prompt = build_reverse_prompt(op, lex[op], plan)
@@ -134,7 +124,7 @@ def run(image: Path, steps: int, cfg: dict, lex: dict, keys: dict, run_id: str |
                 lost=judged["lost"], after_readings=after["readings"], flags=flags)
 
         (sd / "record.json").write_text(json.dumps({
-            "step": t, "operation": op, "banned_op": banned, "plan": plan, "before_reading": before,
+            "step": t, "operation": op, "plan": plan, "before_reading": before,
             "prompt": prompt, "seed": seed, "editor_meta": meta, "reflection": judged,
             "after_reading": after, "pixel_diff": pd, "flags": flags}, indent=2))
         prev_blind = after

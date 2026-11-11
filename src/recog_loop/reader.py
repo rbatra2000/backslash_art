@@ -11,10 +11,12 @@ Given an image of a material sample you will:
 1. READ: give exactly 3 candidate identities for what the image shows, with probabilities summing to 1.
    Candidates may come from different semantic domains (mineral, biological, planetary, built, ...).
    Give the visual evidence for each. Ambiguity is the point: do not collapse to one answer.
-2. HYPOTHESIZE one formation process: what material process most plausibly produced the CURRENT state.
-3. CHOOSE the single lexicon operation that names that formation process. The loop will then UNDO it,
+2. HYPOTHESIZE one formation process, anchored on your TOP-ranked identity: treat it as what the material is, then say
+   which process most likely happened to that kind of material to produce the CURRENT visible state.
+3. CHOOSE the single lexicon operation that names that process. The loop will then UNDO it,
    generating how the sample looked BEFORE that process acted. So pick the operation that actually
-   happened to produce what is visible (e.g. a crust that built up = DEPOSIT), not its inverse.
+   happened (e.g. a crust that built up = DEPOSIT), not its inverse. Pick the most likely one for that material;
+   do not pick an operation just because it differs from an earlier step.
 4. List what must be PRESERVED (structure that existed before the process and should survive the undo:
    major boundaries, host form, base texture) and what to ALTER (the product of the process that the undo removes).
 Keep every reasoning field short (1-2 sentences) and grounded in what is visible."""

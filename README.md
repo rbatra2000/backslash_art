@@ -48,8 +48,7 @@ One commit per logical change. The message says what changed and why (the resear
 
 Every Claude call is a fresh, stateless call with a fixed system prompt (`reader.SYSTEM`, `scoring.JUDGE_SYSTEM`).
 The judge sees only two images and the operation definition: never the generation prompt, earlier steps, or the pipeline's
-reasoning. The planner (the reader that chooses the next operation) is told which operations were already undone so each
-step reaches further back; the "before" reading shown in the UI is always a blind read.
+reasoning. The planner (the reader that chooses the next operation) anchors on its top-ranked reading of what the material is and picks the process most likely to have happened to it; repeats are allowed. It is told which operations were already undone so it doesn't name products that are gone; the "before" reading shown in the UI is always a blind read.
 
 After each image the judge reports, in words and without numeric scores:
 - **undone**: clearly / partly / not visibly, with one sentence of reasoning (transformation legibility)

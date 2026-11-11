@@ -15,4 +15,3 @@ image:
 # Flags only (nothing is selected or retried; the chain is the record).
 gates:
   pixel_diff_min: 0.05       # objective: mean pixel change below this flags "image barely changed"
-  max_same_op_in_row: 2      # planner may not pick the same operation more than this many times in a row
