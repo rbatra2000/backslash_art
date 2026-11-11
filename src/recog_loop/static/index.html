@@ -39,7 +39,7 @@ main{max-width:960px;margin:0 auto;padding:8px 24px 80px}
 .cap{font-size:11px;color:var(--mute);margin-top:9px}
 .reads div{margin:1px 0}.reads .l{margin:0 0 4px}
 .refl{margin-top:14px}.refl div{margin:2px 0}
-.verdict{font-weight:700}.verdict.clearly{color:var(--ok)}.verdict.partly{color:var(--accent)}.verdict.not_visibly,.no{color:var(--bad)}
+.verdict{font-weight:700}.verdict.yes{color:var(--ok)}.verdict.no,.no{color:var(--bad)}
 details{margin-top:14px}
 summary{cursor:pointer;color:var(--mute);list-style:none}summary::-webkit-details-marker{display:none}
 summary:hover{color:var(--ink)}
@@ -118,7 +118,7 @@ function handle(e){
       s.outBox.replaceChildren(el('img',{src:file(e.file)}),el('div',{class:'cap',text:'result'}));
       stripAdd(file(e.file),`step ${t}`);break;
     case'reflection':{
-      const v={clearly:'clearly undone',partly:'partly undone',not_visibly:'not visibly undone'}[e.undone.verdict];
+      const v=e.undone.verdict==='yes'?'undone':'not undone';
       s.refl.replaceChildren(...[
         el('div',{class:'verdict '+e.undone.verdict,text:v}),
         ...e.changes.map(c=>el('div',{text:'- '+c})),

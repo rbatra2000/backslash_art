@@ -116,7 +116,7 @@ def run(image: Path, steps: int, cfg: dict, lex: dict, keys: dict, run_id: str |
             judged, after = fj.result(), fr.result()
         pd = _pixel_diff(inp, out)
         flags = []
-        if judged["undone"]["verdict"] == "not_visibly":
+        if judged["undone"]["verdict"] == "no":
             flags.append("no visible undo")
         if pd < g["pixel_diff_min"]:
             flags.append("image barely changed")

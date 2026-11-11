@@ -19,7 +19,7 @@ Given an image of a material sample you will:
    do not pick an operation just because it differs from an earlier step.
 4. List what must be PRESERVED (structure that existed before the process and should survive the undo:
    major boundaries, host form, base texture) and what to ALTER (the product of the process that the undo removes).
-Keep every reasoning field short (1-2 sentences) and grounded in what is visible."""
+Be terse. Identity labels at most 8 words. Evidence at most 10 words each. Every reasoning field at most 12 words. At most 3 formation evidence items and at most 3 preserve and 3 alter items, each a few words. Ground everything in what is visible."""
 
 
 def encode_image(path, max_edge: int) -> tuple[str, str]:

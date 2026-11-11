@@ -15,25 +15,25 @@ JUDGE_SYSTEM = """You are an independent, blind observer of image transformation
 You are shown Image A (a reference) and Image B (generated from A). B is supposed to show how the sample in A looked
 BEFORE a named material process acted on it, i.e. the process has been undone. You know nothing else.
 Describe only what you can see, concretely and briefly. Report:
-- undone: whether the named process was visibly undone in B: "clearly", "partly" or "not_visibly", with one sentence of reasoning.
-- changes: up to 3 short phrases naming concrete visible differences between A and B (empty if none).
-- kept: up to 3 short phrases naming structural things from A that clearly survive in B (form, boundaries, geometry).
-- lost: up to 3 short phrases naming structural things from A that are gone or distorted in B (empty if none).
-Do not give numeric scores."""
+- undone: "yes" if the named process was visibly undone in B, otherwise "no"; reasoning of at most 10 words.
+- changes: up to 2 phrases (max 8 words each) naming the most visible differences between A and B (empty if none).
+- kept: up to 2 phrases (max 6 words each) naming structure from A that survives in B.
+- lost: up to 2 phrases (max 6 words each) naming structure from A that is gone or distorted in B (empty if none).
+Be terse. Do not give numeric scores."""
 
-_LIST = {"type": "array", "maxItems": 3, "items": {"type": "string"}}
+_LIST = {"type": "array", "maxItems": 2, "items": {"type": "string"}}
 JUDGE_TOOL = {"name": "judge", "description": "Report observations.", "input_schema": {
     "type": "object", "required": ["undone", "changes", "kept", "lost"],
     "properties": {
         "undone": {"type": "object", "required": ["verdict", "reasoning"], "properties": {
-            "verdict": {"type": "string", "enum": ["clearly", "partly", "not_visibly"]},
+            "verdict": {"type": "string", "enum": ["yes", "no"]},
             "reasoning": {"type": "string"}}},
         "changes": _LIST, "kept": _LIST, "lost": _LIST}}}
 
 
 def _validate_judge(o):
-    if o["undone"]["verdict"] not in ("clearly", "partly", "not_visibly") or not isinstance(o["undone"]["reasoning"], str):
-        raise ValueError("undone needs verdict clearly|partly|not_visibly and string reasoning")
+    if o["undone"]["verdict"] not in ("yes", "no") or not isinstance(o["undone"]["reasoning"], str):
+        raise ValueError("undone needs verdict yes|no and string reasoning")
     for k in ("changes", "kept", "lost"):
         if not (isinstance(o[k], list) and all(isinstance(x, str) for x in o[k])):
             raise ValueError(f"{k} must be a list of strings")

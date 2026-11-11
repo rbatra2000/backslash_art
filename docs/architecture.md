@@ -8,7 +8,7 @@ The loop walks a material sample **backwards in time**: read the image, infer wh
 |---|---|---|---|
 | **Planner** (reader) | Claude vision (`claude-sonnet-5-5`) | the current image, the lexicon, what was already undone | 3 ranked identities, formation hypothesis, one operation, keep/undo lists |
 | **Image editor** | FLUX 3 Klein (BFL API) | the current image + the assembled prompt | one image: the sample *before* the operation |
-| **Blind judge** | Claude vision, fresh call | before + after images, operation definition only | undone (clearly/partly/not visibly), changed, kept, lost |
+| **Blind judge** | Claude vision, fresh call | before + after images, operation definition only | undone (yes/no), changed, kept, lost |
 | **Blind reader** | Claude vision, fresh call | the result image only | 3 ranked identities of the result |
 | **Code** (no model) | Python | files | builds the prompt from a template, pixel-diff flag, writes `events.jsonl` |
 
@@ -33,7 +33,7 @@ flowchart TD
 
     subgraph REFLECT["4 - REFLECT (two fresh, stateless Claude calls)"]
         direction LR
-        J["blind judge<br/>before + after only<br/>undone? changed / kept / lost"]
+        J["blind judge<br/>before + after only<br/>undone yes or no<br/>changed / kept / lost"]
         BR["blind re-read<br/>result only<br/>3 ranked identities"]
     end
 

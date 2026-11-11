@@ -51,7 +51,7 @@ The judge sees only two images and the operation definition: never the generatio
 reasoning. The planner (the reader that chooses the next operation) anchors on its top-ranked reading of what the material is and picks the process most likely to have happened to it; repeats are allowed. It is told which operations were already undone so it doesn't name products that are gone; the "before" reading shown in the UI is always a blind read.
 
 After each image the judge reports, in words and without numeric scores:
-- **undone**: clearly / partly / not visibly, with one sentence of reasoning (transformation legibility)
+- **undone**: yes / no, with a few words of reasoning (transformation legibility)
 - **changed**, **kept**, **lost**: short phrases for what visibly differs, what structure survives, what is gone (source inheritance)
 - the image is re-read blind, so you can compare how it reads before and after (semantic displacement, as ranked readings)
 
