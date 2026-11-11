@@ -65,7 +65,7 @@ def run(image: Path, steps: int, cfg: dict, lex: dict, keys: dict, run_id: str |
         ev.emit("status", t, text="reading image")
         plan = read_image(inp, lex, cfg, ak)
         op = plan["operation"]["name"]
-        ev.emit("reading", t, readings=plan["readings"], scale=plan["scale_estimate"])
+        ev.emit("reading", t, identity=plan["identity"], scale=plan["scale_estimate"])
         ev.emit("hypothesis", t, formation=plan["formation"], operation=plan["operation"])
 
         # 2. PROMPT, 3. GENERATE one image
@@ -85,6 +85,6 @@ def run(image: Path, steps: int, cfg: dict, lex: dict, keys: dict, run_id: str |
     ev.emit("status", None, text="reading final image")
     final = read_image(current, lex, cfg, ak)
     (run_dir / "final.json").write_text(json.dumps(final, indent=2))
-    ev.emit("final", None, readings=final["readings"], file=str(current.relative_to(run_dir)))
+    ev.emit("final", None, identity=final["identity"], file=str(current.relative_to(run_dir)))
     ev.emit("run_end", None)
     return run_dir

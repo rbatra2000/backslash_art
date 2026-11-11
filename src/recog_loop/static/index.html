@@ -96,7 +96,6 @@ function ensure(t){
 }
 const why=(s,n)=>s.why.append(n);
 const list=a=>a.length?a.join('; '):'nothing';
-const ranked=rs=>rs.map((r,i)=>el('div',{text:`${i+1}. ${r.label}`}));
 
 function handle(e){
   const t=e.step, s=t?ensure(t):null;
@@ -105,8 +104,8 @@ function handle(e){
     case'step_start':s.inImg.src=file(e.input);if(t===1)stripAdd(file(e.input),'original');break;
     case'status':s.st.textContent=e.text;$('#status').textContent=`step ${t} · ${e.text}`;$('#status').className='live';break;
     case'reading':
-      s.reads.replaceChildren(el('div',{class:'cap l',text:'reads as'}),...ranked(e.readings));
-      why(s,el('p',{},el('b',{text:'Evidence: '}),e.readings.map(r=>r.evidence).join(' · ')));break;
+      s.reads.replaceChildren(el('div',{class:'cap l',text:'reads as'}),el('div',{text:e.identity.label}));
+      why(s,el('p',{},el('b',{text:'Evidence: '}),e.identity.evidence));break;
     case'hypothesis':{const o=e.operation;
       s.title.textContent=`step ${String(t).padStart(2,'0')} -- undo ${o.name}`;
       why(s,el('p',{},el('b',{text:'Formed by: '}),e.formation.process));
@@ -120,7 +119,7 @@ function handle(e){
     case'final':{
       const f=el('div',{class:'step'},el('h2',{},el('span',{text:'final'})),el('div',{class:'rule',text:'='.repeat(120)}),
         el('div',{class:'top'},el('div',{},el('img',{src:file(e.file)})),el('div',{class:'arrow',text:''}),el('div'),
-          el('div',{class:'reads'},el('div',{class:'cap l',text:'reads as'}),...ranked(e.readings))));
+          el('div',{class:'reads'},el('div',{class:'cap l',text:'reads as'}),el('div',{text:e.identity.label}))));
       $('#timeline').append(f);break}
     case'step_end':s.st.textContent='';break;
     case'error':s.root.append(el('div',{class:'err',text:e.text}));break;

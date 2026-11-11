@@ -1,4 +1,4 @@
-"""Claude vision reader: image -> readings, formation hypothesis, operation to undo."""
+"""Claude vision reader: image -> identity, formation hypothesis, operation to undo."""
 import base64
 import io
 
@@ -6,14 +6,14 @@ import anthropic
 from PIL import Image, ImageOps
 
 SYSTEM = """You read images of material samples for an experiment that moves BACKWARDS in time.
-1. READ: 3 identities (any domain), probabilities summing to 1, with visible evidence. Keep the ambiguity.
-2. HYPOTHESIZE the process that most likely happened to your TOP identity to produce the current surface.
+1. READ: one guess for what the material is (any domain), with visible evidence.
+2. HYPOTHESIZE the process that most likely happened to that material to produce the current surface.
    The object's form (holes, cavities, ridges, shape) is not a process product: never undo it.
    Choose a process that acted on its surface material (coatings, crusts, stains, corrosion, colour).
 3. CHOOSE the lexicon operation naming that process (what happened, not its inverse). It will be undone
    to show the sample before.
 4. List what to PRESERVE and what to ALTER (undo).
-Be terse: labels max 8 words, evidence 10, reasoning 12, lists max 3 short items."""
+Be terse: label max 8 words, evidence 10, reasoning 12, lists max 3 short items."""
 
 
 def encode_image(path, max_edge: int) -> tuple[str, str]:
@@ -28,22 +28,15 @@ def encode_image(path, max_edge: int) -> tuple[str, str]:
 def _tool_schema(op_names: list[str]) -> dict:
     return {
         "name": "report",
-        "description": "Report the reading, formation hypothesis and operation.",
+        "description": "Report the identity, formation hypothesis and operation.",
         "input_schema": {
             "type": "object",
-            "required": ["readings", "scale_estimate", "formation", "operation"],
+            "required": ["identity", "scale_estimate", "formation", "operation"],
             "properties": {
-                "readings": {
-                    "type": "array", "minItems": 3, "maxItems": 3,
-                    "items": {
-                        "type": "object",
-                        "required": ["label", "probability", "evidence"],
-                        "properties": {
-                            "label": {"type": "string"},
-                            "probability": {"type": "number"},
-                            "evidence": {"type": "string"},
-                        },
-                    },
+                "identity": {
+                    "type": "object",
+                    "required": ["label", "evidence"],
+                    "properties": {"label": {"type": "string"}, "evidence": {"type": "string"}},
                 },
                 "scale_estimate": {"type": "string", "description": "e.g. '2-3 cm field of view'"},
                 "formation": {
@@ -81,17 +74,9 @@ def validate(out: dict, op_names: list[str]) -> None:
     """Raise ValueError describing the first schema problem (tool schemas aren't enforced for this model)."""
     if not isinstance(out, dict):
         raise ValueError("report must be an object")
-    rs = out.get("readings")
-    if not (isinstance(rs, list) and len(rs) == 3 and all(
-            isinstance(r, dict) and {"label", "probability", "evidence"} <= r.keys() for r in rs)):
-        raise ValueError("`readings` must be a list of exactly 3 objects with label, probability, evidence")
-    for r in rs:  # the model sometimes returns "0.4" as a string; coerce, or reject so the call is retried
-        try:
-            r["probability"] = float(r["probability"])
-        except (TypeError, ValueError):
-            raise ValueError("each reading's probability must be a number")
-        if not isinstance(r["label"], str) or not isinstance(r["evidence"], str):
-            raise ValueError("each reading's label and evidence must be strings")
+    i = out.get("identity")
+    if not (isinstance(i, dict) and isinstance(i.get("label"), str) and isinstance(i.get("evidence"), str)):
+        raise ValueError("`identity` must be an object with string label and evidence")
     f = out.get("formation")
     if not (isinstance(f, dict) and {"process", "evidence", "reasoning"} <= f.keys()):
         raise ValueError("`formation` must be an object with process, evidence (list), reasoning")
@@ -133,7 +118,4 @@ def read_image(path, lexicon: dict, cfg: dict, api_key: str, retries: int = 3) -
             last_err = str(e)
     else:
         raise RuntimeError(f"Reader gave an invalid report {retries} times: {last_err}")
-    total = sum(r["probability"] for r in out["readings"]) or 1.0
-    for r in out["readings"]:  # normalise in case the model's probabilities are slightly off
-        r["probability"] = round(r["probability"] / total, 4)
     return out

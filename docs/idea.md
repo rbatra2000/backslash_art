@@ -24,9 +24,9 @@ step 0        step 1          step 2         step 3
 
 ```
 image
-  | what is it?         3 guesses (any domain)
+  | what is it?         one guess (any domain)
   v
-"rusted cast iron"      top guess = the material
+"rusted cast iron"      the guess = the material
   | what happened to it?
   v
 DEPOSIT                 one operation from the lexicon
@@ -55,13 +55,3 @@ step 10    carved plaster sculpture
 ```
 
 Each step reads the image fresh, with no history. The reading is an event that redirects the next step.
-
-## How it is meant to read
-
-```
-guesses before         guesses after
-1. rusted metal        1. weathered stone
-2. lichen crust        2. rusted metal
-3. efflorescence       3. plaster
-        \_____ ambiguity moves, it does not collapse _____/
-```

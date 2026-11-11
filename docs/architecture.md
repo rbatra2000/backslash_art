@@ -22,7 +22,7 @@ sequenceDiagram
     participant P as Planner (Claude)
     participant K as Klein
     C->>P: image + lexicon
-    P-->>C: 3 identities, process, operation, keep/undo
+    P-->>C: identity, process, operation, keep/undo
     C->>K: image + prompt from template
     K-->>C: result image
 ```
@@ -33,7 +33,7 @@ sequenceDiagram
 
 ```mermaid
 flowchart LR
-    A[top identity] --> B[most likely process<br/>for that material] --> C[lexicon operation] --> D[undo it]
+    A[identity] --> B[most likely process<br/>for that material] --> C[lexicon operation] --> D[undo it]
 ```
 
 ## Operation groups
