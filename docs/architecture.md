@@ -9,10 +9,12 @@ The loop walks a material sample **backwards in time**: read the image, infer wh
 | **Planner** (reader) | Claude vision (`claude-sonnet-5-5`) | the current image, the lexicon, what was already undone | 3 ranked identities, formation hypothesis, one operation, keep/undo lists |
 | **Image editor** | FLUX 3 Klein (BFL API) | the current image + the assembled prompt | one image: the sample *before* the operation |
 | **Blind judge** | Claude vision, fresh call | before + after images, operation definition only | undone (yes/no), changed, kept, lost |
-| **Blind reader** | Claude vision, fresh call | the result image only | 3 ranked identities of the result |
+| **Blind re-reader** | Claude vision, fresh call | the result image only | 3 ranked identities of the result |
 | **Code** (no model) | Python | files | builds the prompt from a template, pixel-diff flag, writes `events.jsonl` |
 
-**The identities come from the Planner (Claude).** There is no classifier or embedding model. The labels, their order and the evidence are the model's own judgment; their probabilities are kept in `record.json` but are not calibrated and are not shown in the UI.
+**4 model roles, 0 persistent agents.** Every role is a stateless API call (3 Claude + 1 Klein per step, so about 30 + 10 for a 10-step run). Nothing remembers anything between calls; the only state carried forward is the image and the list of operations already undone.
+
+**The identities come from Claude.** The Planner ranks them for the step's input; the Blind re-reader ranks them again for the result. There is no classifier or embedding model. The labels, their order and the evidence are the model's own judgment; their probabilities are kept in `record.json` but are not calibrated and are not shown in the UI.
 
 ## One step
 
@@ -45,6 +47,15 @@ flowchart TD
     NEXT -. "repeat (10 steps)" .-> IMG
 ```
 
+## Why a blind re-reader
+
+The project measures how the model's *recognition* shifts as the sample is unmade. The judge can't show that: it compares two images for one operation and returns no identities. The re-reader gives the "after" reading, used two ways:
+
+- the **reading shift** shown under "+ why" (what the result now reads as);
+- the next step's **"before" reading**, so every displayed reading is context-free.
+
+The Planner reads the same image again at the next step, but with history attached, which nudges its identities. So its read picks the operation and the blind read is what's displayed. Dropping the re-reader would save one call per step but mix history into the readings you compare.
+
 ## How the operation is picked
 
 ```mermaid
@@ -57,6 +68,7 @@ flowchart LR
 - The choice is restricted to the 18 operations in `lexicon.yaml` (three groups: formation, unmaking, reorganization).
 - It picks the process that *happened*, then the loop undoes it. A crust that built up is DEPOSIT; the step removes the crust.
 - Repeats are allowed. Earlier undone steps are shown to the planner only so it doesn't name products that are already gone.
+- All model text is kept terse: caps on words are in the system prompts (labels 8 words, reasoning 10-12, judge lists 2 short phrases).
 
 ## What stays blind
 
