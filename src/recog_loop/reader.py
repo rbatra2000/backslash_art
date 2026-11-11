@@ -3,7 +3,7 @@ import base64
 import io
 
 import anthropic
-from PIL import Image
+from PIL import Image, ImageOps
 
 SYSTEM = """You are a materials-aware image reader for an art-research experiment that moves BACKWARDS in time.
 
@@ -22,7 +22,7 @@ Keep every reasoning field short (1-2 sentences) and grounded in what is visible
 
 def encode_image(path, max_edge: int) -> tuple[str, str]:
     """Downscale to max_edge and return (base64, media_type)."""
-    img = Image.open(path).convert("RGB")
+    img = ImageOps.exif_transpose(Image.open(path)).convert("RGB")  # honour EXIF rotation
     img.thumbnail((max_edge, max_edge))
     buf = io.BytesIO()
     img.save(buf, "JPEG", quality=90)
@@ -81,27 +81,58 @@ def _lexicon_text(lexicon: dict) -> str:
     return "\n".join(lines)
 
 
-def read_image(path, lexicon: dict, cfg: dict, api_key: str, prior_context: str | None = None) -> dict:
+def validate(out: dict, op_names: list[str]) -> None:
+    """Raise ValueError describing the first schema problem (tool schemas aren't enforced for this model)."""
+    if not isinstance(out, dict):
+        raise ValueError("report must be an object")
+    rs = out.get("readings")
+    if not (isinstance(rs, list) and len(rs) == 3 and all(
+            isinstance(r, dict) and {"label", "probability", "evidence"} <= r.keys() for r in rs)):
+        raise ValueError("`readings` must be a list of exactly 3 objects with label, probability, evidence")
+    f = out.get("formation")
+    if not (isinstance(f, dict) and {"process", "evidence", "reasoning"} <= f.keys()):
+        raise ValueError("`formation` must be an object with process, evidence (list), reasoning")
+    o = out.get("operation")
+    if not (isinstance(o, dict) and {"name", "reasoning", "preserve", "alter"} <= o.keys()):
+        raise ValueError("`operation` must be an object with name, reasoning, preserve (list), alter (list), not a string")
+    if o["name"] not in op_names:
+        raise ValueError(f"operation.name must be one of {op_names}")
+    if not (isinstance(o["preserve"], list) and isinstance(o["alter"], list)):
+        raise ValueError("operation.preserve and operation.alter must be lists of strings")
+
+
+def read_image(path, lexicon: dict, cfg: dict, api_key: str, prior_context: str | None = None,
+               retries: int = 3) -> dict:
     """One reader call. Each call is stateless; pass prior_context only if you want history-aware reading."""
     data, media = encode_image(path, cfg["image"]["max_edge"])
     client = anthropic.Anthropic(api_key=api_key)
     text = _lexicon_text(lexicon)
     if prior_context:
         text += f"\n\nContext from earlier steps:\n{prior_context}"
-    resp = client.messages.create(
-        model=cfg["models"]["reader"],
-        max_tokens=2000,
-        system=SYSTEM,
-        tools=[_tool_schema(list(lexicon))],
-        # this model rejects forced tool_choice, so instruct instead and verify below
-        messages=[{"role": "user", "content": [
-            {"type": "image", "source": {"type": "base64", "media_type": media, "data": data}},
-            {"type": "text", "text": text + "\n\nRespond by calling the `report` tool exactly once."},
-        ]}],
-    )
-    out = next((b.input for b in resp.content if b.type == "tool_use"), None)
-    if out is None:
-        raise RuntimeError(f"Reader did not call the report tool. Got: {resp.content}")
+    last_err = None
+    for attempt in range(retries):
+        note = f"\n\nYour previous report was invalid: {last_err}. Fix it." if last_err else ""
+        resp = client.messages.create(
+            model=cfg["models"]["reader"],
+            max_tokens=2000,
+            system=SYSTEM,
+            tools=[_tool_schema(list(lexicon))],
+            # this model rejects forced tool_choice, so instruct instead and validate below
+            messages=[{"role": "user", "content": [
+                {"type": "image", "source": {"type": "base64", "media_type": media, "data": data}},
+                {"type": "text", "text": text + "\n\nRespond by calling the `report` tool exactly once." + note},
+            ]}],
+        )
+        out = next((b.input for b in resp.content if b.type == "tool_use"), None)
+        try:
+            if out is None:
+                raise ValueError("no `report` tool call was made")
+            validate(out, list(lexicon))
+            break
+        except ValueError as e:
+            last_err = str(e)
+    else:
+        raise RuntimeError(f"Reader gave an invalid report {retries} times: {last_err}")
     total = sum(r["probability"] for r in out["readings"]) or 1.0
     for r in out["readings"]:  # normalise in case the model's probabilities are slightly off
         r["probability"] = round(r["probability"] / total, 4)
