@@ -5,58 +5,65 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Before Recognition</title>
 <style>
-:root{--bg:#f6f5f2;--card:#fff;--ink:#1d1c1a;--mute:#6f6b64;--line:#e2dfd8;--accent:#b5541c;--ok:#2f7d4f;--bad:#b3362b}
-@media (prefers-color-scheme:dark){:root{--bg:#141413;--card:#1e1d1b;--ink:#ecebe7;--mute:#9a968d;--line:#33312d;--accent:#e08a52;--ok:#6fbf8e;--bad:#e27a6f}}
+:root{--bg:#f3f0e8;--ink:#1a1917;--mute:#7b766b;--line:#1a1917;--soft:#d9d4c7;--accent:#d4571c;--ok:#2d7a4a;--bad:#c23a2b;--glow:#ef8e4633}
+@media (prefers-color-scheme:dark){:root{--bg:#141414;--ink:#e8e4da;--mute:#8d887c;--line:#e8e4da;--soft:#34322d;--accent:#ef8e46;--ok:#7cc79a;--bad:#ee6a5a;--glow:#ef8e4622}}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.4 system-ui,-apple-system,sans-serif}
-header{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-h1{font-size:15px;margin:0 8px 0 0}
-select,input,button{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:6px;padding:4px 8px}
-button{cursor:pointer;background:var(--accent);color:#fff;border-color:var(--accent)}
-input[type=number]{width:56px}
+body{margin:0;color:var(--ink);font:13px/1.55 ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  background:radial-gradient(circle at 12% -10%,var(--glow),transparent 45%),radial-gradient(circle at 100% 40%,#422abf14,transparent 40%),var(--bg);background-attachment:fixed}
+header{position:sticky;top:0;z-index:5;padding:12px 24px;display:flex;flex-wrap:wrap;gap:12px;align-items:baseline;background:linear-gradient(var(--bg) 70%,transparent)}
+h1{font-size:13px;margin:0 12px 0 0;font-weight:700;letter-spacing:.02em}
+select,input,button{font:inherit;color:var(--ink);background:transparent;border:0;border-bottom:1px solid var(--mute);border-radius:0;padding:1px 2px;outline:0}
+select{max-width:210px}
+input[type=number]{width:3.2ch;text-align:center}
+button{cursor:pointer;border:0;padding:0;color:var(--accent)}
+button::before{content:"[ "}button::after{content:" ]"}
+button:hover{text-decoration:underline}
 #status{margin-left:auto;color:var(--mute)}
-#status.live::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);margin-right:6px;animation:p 1s infinite}
-@keyframes p{50%{opacity:.25}}
-main{max-width:980px;margin:0 auto;padding:16px}
-/* chain strip: one thumbnail per stage */
-#strip{display:flex;align-items:center;gap:6px;overflow-x:auto;padding-bottom:12px;margin-bottom:12px}
-#strip figure{margin:0;flex:0 0 auto;text-align:center;font-size:11px;color:var(--mute)}
-#strip img{width:84px;height:112px;object-fit:cover;border-radius:6px;border:1px solid var(--line);display:block}
-#strip .arr{color:var(--mute)}
-/* step card */
-.step{background:var(--card);border:1px solid var(--line);border-radius:10px;margin-bottom:14px;padding:12px 14px}
-.step h2{margin:0 0 10px;font-size:14px;display:flex;gap:8px;align-items:baseline}
-.step h2 .st{margin-left:auto;font-weight:400;color:var(--mute);font-size:12px;font-style:italic}
-.top{display:grid;grid-template-columns:150px 20px 150px 1fr;gap:10px;align-items:center}
-@media(max-width:700px){.top{grid-template-columns:1fr 1fr}.top .arrow{display:none}.top .reads{grid-column:1/-1}}
-.top img,.ph{width:100%;border-radius:6px;display:block;aspect-ratio:3/4;object-fit:cover;background:var(--line)}
-.arrow{color:var(--mute);text-align:center}
-.cap{font-size:11px;color:var(--mute);margin-top:2px;text-align:center}
-.reads div{margin:2px 0}.reads .l{margin-bottom:4px}.refl{margin-top:10px;font-size:13px}.refl div{margin:2px 0}.verdict{font-weight:600}.verdict.clearly{color:var(--ok)}.verdict.partly{color:var(--accent)}.verdict.not_visibly,.no{color:var(--bad)}
-.reads .bar{display:inline-block;height:6px;background:var(--accent);border-radius:3px;margin-right:6px;vertical-align:middle}
-details{margin-top:10px}
-summary{cursor:pointer;color:var(--mute);font-size:12px}
-.why{font-size:12px;color:var(--mute);margin-top:6px}
-.why p{margin:4px 0}.why b{color:var(--ink)}
-.chip{display:inline-block;border:1px solid var(--line);border-radius:99px;padding:0 7px;margin:1px 3px 1px 0}
-.keep{border-color:var(--ok);color:var(--ok)}.alt{border-color:var(--bad);color:var(--bad)}
-pre{white-space:pre-wrap;margin:4px 0;font:11px/1.4 ui-monospace,monospace}
-.err{color:var(--bad);font-size:12px}
-.empty{color:var(--mute);text-align:center;padding:60px 0}
+#status::before{content:"[ "}#status::after{content:" ]"}
+#status.live{color:var(--accent)}
+main{max-width:960px;margin:0 auto;padding:8px 24px 80px}
+/* chain strip */
+#strip{display:flex;align-items:center;gap:8px;overflow-x:auto;padding:6px 6px 16px;margin-bottom:20px}
+#strip figure{margin:0;flex:0 0 auto;font-size:11px;color:var(--mute)}
+#strip img{width:72px;height:96px;object-fit:cover;outline:1px solid var(--line);outline-offset:2px;display:block;margin-bottom:5px}
+#strip .arr{color:var(--mute);margin:0 4px 18px}
+/* step */
+.step{margin-bottom:44px}
+.step h2{margin:0;font-size:13px;font-weight:700;display:flex;gap:12px;align-items:baseline}
+.step h2 .st{margin-left:auto;font-weight:400;color:var(--accent)}
+.step h2+.rule{color:var(--mute);overflow:hidden;white-space:nowrap;margin:0 0 14px;letter-spacing:0}
+.top{display:grid;grid-template-columns:160px 24px 160px 1fr;gap:12px;align-items:start}
+@media(max-width:720px){.top{grid-template-columns:1fr 1fr}.top .arrow{display:none}.top>div:last-child{grid-column:1/-1}}
+.top img,.ph{width:100%;aspect-ratio:3/4;object-fit:cover;display:block;outline:1px solid var(--line);outline-offset:3px;background:transparent}
+.arrow{color:var(--mute);text-align:center;padding-top:80px}
+.cap{font-size:11px;color:var(--mute);margin-top:9px}
+.reads div{margin:1px 0}.reads .l{margin:0 0 4px}
+.refl{margin-top:14px}.refl div{margin:2px 0}
+.verdict{font-weight:700}.verdict.clearly{color:var(--ok)}.verdict.partly{color:var(--accent)}.verdict.not_visibly,.no{color:var(--bad)}
+details{margin-top:14px}
+summary{cursor:pointer;color:var(--mute);list-style:none}summary::-webkit-details-marker{display:none}
+summary:hover{color:var(--ink)}
+.why{margin-top:8px;padding-left:12px;border-left:1px solid var(--soft);color:var(--mute)}
+.why p{margin:6px 0}.why b{color:var(--ink);font-weight:600}
+.chip{margin-right:8px}.chip::before{content:"["}.chip::after{content:"]"}
+.keep{color:var(--ok)}.alt{color:var(--bad)}
+pre{white-space:pre-wrap;margin:4px 0;font:inherit}
+.err{color:var(--bad)}
+.empty{color:var(--mute);padding:60px 0}
 </style>
 </head>
 <body>
 <header>
-  <h1>Before Recognition</h1>
+  <h1>before_recognition</h1>
   <select id="runs"></select>
   <select id="asset"></select>
   <input id="steps" type="number" min="1" max="20" value="3" title="steps">
-  <button id="start">Start</button>
+  <button id="start">start</button>
   <span id="status">idle</span>
 </header>
 <main>
   <div id="strip"></div>
-  <div id="timeline"><div class="empty">Pick a run or start a new one.</div></div>
+  <div id="timeline"><div class="empty">// pick a run or start a new one</div></div>
 </main>
 <script>
 const $=s=>document.querySelector(s);
@@ -67,13 +74,13 @@ const file=f=>`/runs/${runId}/${f}`;
 
 function stripAdd(src,label){
   const s=$('#strip');
-  if(s.children.length)s.append(el('span',{class:'arr',text:'→'}));
+  if(s.children.length)s.append(el('span',{class:'arr',text:'->'}));
   s.append(el('figure',{},el('img',{src}),el('div',{text:label})));
 }
 function ensure(t){
   if(steps[t])return steps[t];
   const s={};
-  s.title=el('span',{text:`Step ${t}`});
+  s.title=el('span',{text:`step ${String(t).padStart(2,'0')}`});
   s.st=el('span',{class:'st'});
   s.inImg=el('img');
   s.outBox=el('div',{},el('div',{class:'ph'}),el('div',{class:'cap',text:'result'}));
@@ -81,9 +88,9 @@ function ensure(t){
   s.refl=el('div',{class:'refl'});
   s.why=el('div',{class:'why'});
   s.root=el('div',{class:'step'},
-    el('h2',{},s.title,s.st),
-    el('div',{class:'top'},el('div',{},s.inImg,el('div',{class:'cap',text:'before'})),el('div',{class:'arrow',text:'→'}),s.outBox,el('div',{},s.reads,s.refl)),
-    el('details',{},el('summary',{text:'Why'}),s.why));
+    el('h2',{},s.title,s.st),el('div',{class:'rule',text:'='.repeat(120)}),
+    el('div',{class:'top'},el('div',{},s.inImg,el('div',{class:'cap',text:'before'})),el('div',{class:'arrow',text:'->'}),s.outBox,el('div',{},s.reads,s.refl)),
+    el('details',{},el('summary',{text:'+ why'}),s.why));
   $('#timeline').append(s.root);
   return steps[t]=s;
 }
@@ -98,10 +105,10 @@ function handle(e){
     case'step_start':s.inImg.src=file(e.input);if(t===1)stripAdd(file(e.input),'original');break;
     case'status':s.st.textContent=e.text;$('#status').textContent=`step ${t} · ${e.text}`;$('#status').className='live';break;
     case'reading':
-      s.reads.replaceChildren(el('div',{class:'cap l',text:'reads as (most to least likely)'}),...ranked(e.readings));
+      s.reads.replaceChildren(el('div',{class:'cap l',text:'reads as, most to least likely'}),...ranked(e.readings));
       why(s,el('p',{},el('b',{text:'Evidence: '}),e.readings.map(r=>r.evidence).join(' · ')));break;
     case'hypothesis':{const o=e.operation;
-      s.title.textContent=`Step ${t} · undo ${o.name}`;
+      s.title.textContent=`step ${String(t).padStart(2,'0')} -- undo ${o.name}`;
       why(s,el('p',{},el('b',{text:'Formed by: '}),e.formation.process));
       why(s,el('p',{text:e.formation.reasoning}));
       why(s,el('p',{},el('b',{text:'Why '+o.name+': '}),o.reasoning+(e.banned?` (${e.banned} excluded: used too often)`:'')));
@@ -112,10 +119,10 @@ function handle(e){
       stripAdd(file(e.file),`step ${t}`);break;
     case'reflection':{
       const v={clearly:'clearly undone',partly:'partly undone',not_visibly:'not visibly undone'}[e.undone.verdict];
-      s.refl.replaceChildren(
+      s.refl.replaceChildren(...[
         el('div',{class:'verdict '+e.undone.verdict,text:v}),
-        el('div',{text:'Changed: '+list(e.changes)}),
-        e.flags.length?el('div',{class:'no',text:'⚑ '+e.flags.join('; ')}):null);
+        ...e.changes.map(c=>el('div',{text:'- '+c})),
+        e.flags.length?el('div',{class:'no',text:'! '+e.flags.join('; ')}):null].filter(Boolean));
       why(s,el('p',{},el('b',{text:'Judge: '}),e.undone.reasoning));
       why(s,el('p',{},el('b',{text:'Kept: '}),list(e.kept)));
       why(s,el('p',{},el('b',{text:'Lost: '}),list(e.lost)));
@@ -135,7 +142,7 @@ function open_(id){
 }
 async function loadLists(select){
   const runs=await (await fetch('/api/runs')).json();
-  const sel=$('#runs');sel.replaceChildren(el('option',{value:'',text:'past runs…'}),...runs.map(r=>el('option',{value:r,text:r})));
+  const sel=$('#runs');sel.replaceChildren(el('option',{value:'',text:'past runs'}),...runs.map(r=>el('option',{value:r,text:r})));
   if(select)sel.value=select;
   const assets=await (await fetch('/api/assets')).json();
   $('#asset').replaceChildren(...assets.map(a=>el('option',{value:a,text:a})));
